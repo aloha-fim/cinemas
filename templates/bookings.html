@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Check Bookings - GIC Cinemas{% endblock %}
+
+{% block content %}
+<div class="page-header animate-fade-in">
+    <h1 class="display-title">Check Bookings</h1>
+    <p class="display-subtitle mt-md">View your reservations</p>
+</div>
+
+<section class="max-w-md animate-slide-up stagger-1" style="margin: 0 auto;">
+    <div class="card card-elevated">
+        <p style="color: var(--text-secondary); margin-bottom: var(--space-lg);">
+            Enter booking id, or enter blank to go back to main menu:
+        </p>
+        
+        <form method="POST" action="/bookings/search">
+            <div class="form-group">
+                <label class="form-label" for="booking_id">Booking ID</label>
+                <input 
+                    type="text" 
+                    id="booking_id" 
+                    name="booking_id" 
+                    class="form-input form-input-mono"
+                    placeholder="e.g. GIC0001"
+                    autofocus
+                >
+            </div>
+            
+            <div class="flex gap-md">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    Search
+                </button>
+                <a href="/" class="btn btn-secondary" style="flex: 1;">
+                    Back to Menu
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+
+{% if bookings and bookings|length > 0 %}
+<section class="max-w-lg animate-slide-up stagger-2 mt-2xl" style="margin-left: auto; margin-right: auto;">
+    <h2 style="font-size: 1rem; color: var(--text-muted); margin-bottom: var(--space-lg); text-transform: uppercase; letter-spacing: 0.1em;">
+        All Bookings
+    </h2>
+    
+    <div class="menu-grid">
+        {% for booking in bookings %}
+        <a href="/booking/{{ booking.booking_id }}?show_map=true" class="menu-item">
+            <div class="menu-item-number" style="background: var(--accent-violet-dim); color: var(--accent-violet);">
+                🎟
+            </div>
+            <div class="menu-item-content">
+                <div class="menu-item-title">{{ booking.booking_id }}</div>
+                <div class="menu-item-desc">
+                    {% set seat_count = booking.booking_seats|length %}
+                    {{ seat_count }} seat{% if seat_count > 1 %}s{% endif %}
+                </div>
+            </div>
+            <div class="menu-item-arrow">→</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

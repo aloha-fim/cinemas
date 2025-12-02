@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Setup Movie - GIC Cinemas{% endblock %}
+
+{% block content %}
+<div class="page-header animate-fade-in">
+    <h1 class="display-title">Configure Movie</h1>
+    <p class="display-subtitle mt-md">Set up your cinema screening</p>
+</div>
+
+<section class="max-w-md" style="margin: 0 auto;">
+    <div class="card card-elevated animate-slide-up stagger-1">
+        {% if error %}
+        <div class="alert alert-error mb-xl">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">{{ error }}</div>
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="/setup">
+            <div class="form-group">
+                <label class="form-label" for="title">Movie Title</label>
+                <input 
+                    type="text" 
+                    id="title" 
+                    name="title" 
+                    class="form-input"
+                    placeholder="Enter movie title"
+                    required
+                    autofocus
+                >
+            </div>
+            
+            <div class="stats-row">
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label" for="rows">Rows</label>
+                    <input 
+                        type="number" 
+                        id="rows" 
+                        name="rows" 
+                        class="form-input form-input-mono"
+                        placeholder="A-Z"
+                        min="1"
+                        max="26"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label" for="seats_per_row">Seats/Row</label>
+                    <input 
+                        type="number" 
+                        id="seats_per_row" 
+                        name="seats_per_row" 
+                        class="form-input form-input-mono"
+                        placeholder="1-50"
+                        min="1"
+                        max="50"
+                        required
+                    >
+                </div>
+            </div>
+            
+            <div class="alert alert-info mb-xl">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>Limits:</strong> Max 26 rows (A-Z), 50 seats per row, 1,300 total capacity
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg w-full">
+                Create Cinema
+            </button>
+        </form>
+    </div>
+</section>
+
+<section class="text-center animate-slide-up stagger-2 mt-2xl">
+    <a href="/" class="btn btn-ghost">← Back to Home</a>
+</section>
+{% endblock %}

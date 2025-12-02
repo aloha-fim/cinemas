@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - GIC Cinemas{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-eyebrow animate-fade-up">
+        <span class="pulse"></span>
+        Now Showing
+    </div>
+    <h1 class="display-hero hero-title">
+        Welcome to <span class="text-gradient">GIC Cinemas</span>
+    </h1>
+    <p class="display-subtitle hero-subtitle">
+        Experience movies the way they were meant to be seen
+    </p>
+</section>
+
+{% if movie %}
+<!-- Now Playing Card -->
+<section class="container-medium mb-2xl">
+    <div class="card card-glow animate-fade-up delay-2">
+        <div class="movie-header">
+            <h2 class="movie-title text-gradient">{{ movie.title }}</h2>
+            <div class="movie-meta">
+                <div class="movie-meta-item">
+                    <span class="icon">🎭</span>
+                    <span>{{ movie.rows }} rows × {{ movie.seats_per_row }} seats</span>
+                </div>
+                <div class="movie-meta-item">
+                    <span class="badge badge-success">{{ available_seats }} seats available</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Menu Options -->
+<section class="container-medium">
+    <div class="menu-grid">
+        {% if movie %}
+        <a href="/book" class="menu-item animate-fade-up delay-3">
+            <div class="menu-number">1</div>
+            <div class="menu-content">
+                <div class="menu-title">Book tickets</div>
+                <div class="menu-description">Reserve your seats for {{ movie.title }}</div>
+            </div>
+            <div class="menu-arrow">→</div>
+        </a>
+        
+        <a href="/bookings" class="menu-item animate-fade-up delay-4">
+            <div class="menu-number">2</div>
+            <div class="menu-content">
+                <div class="menu-title">Check bookings</div>
+                <div class="menu-description">View your confirmed reservations</div>
+            </div>
+            <div class="menu-arrow">→</div>
+        </a>
+        
+        <a href="/exit" class="menu-item animate-fade-up delay-5">
+            <div class="menu-number">3</div>
+            <div class="menu-content">
+                <div class="menu-title">Exit</div>
+                <div class="menu-description">Thank you for visiting GIC Cinemas</div>
+            </div>
+            <div class="menu-arrow">→</div>
+        </a>
+        {% else %}
+        <a href="/setup" class="menu-item animate-fade-up delay-3">
+            <div class="menu-number">⚙</div>
+            <div class="menu-content">
+                <div class="menu-title">Setup Movie</div>
+                <div class="menu-description">Configure a new movie and seating arrangement</div>
+            </div>
+            <div class="menu-arrow">→</div>
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+{% if movie %}
+<section class="text-center mt-3xl animate-fade-up delay-6">
+    <a href="/setup" class="btn btn-ghost">
+        ⚙ Configure New Movie
+    </a>
+</section>
+{% endif %}
+{% endblock %}

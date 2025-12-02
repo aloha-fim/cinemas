@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDD Mastery | Test-Driven Development Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Colors */
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0f;
+            --bg-tertiary: #12121a;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            
+            /* Accent Colors */
+            --red: #ff3b5c;
+            --red-glow: rgba(255, 59, 92, 0.3);
+            --green: #00ff88;
+            --green-glow: rgba(0, 255, 136, 0.3);
+            --blue: #00d4ff;
+            --blue-glow: rgba(0, 212, 255, 0.3);
+            --purple: #a855f7;
+            --purple-glow: rgba(168, 85, 247, 0.3);
+            --orange: #ff9500;
+            --yellow: #ffd60a;
+            
+            /* Glass */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-hover: rgba(255, 255, 255, 0.06);
+            
+            /* Typography */
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Sora', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            /* Spacing */
+            --section-padding: clamp(4rem, 10vw, 8rem);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Effects */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(255, 59, 92, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 20%, rgba(0, 255, 136, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 50% at 50% 80%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.015;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav-logo {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-logo span {
+            background: linear-gradient(135deg, var(--red), var(--green), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 2rem;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 10vw, 7rem);
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.04em;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+
+        .hero h1 .cycle-word {
+            display: inline-block;
+            position: relative;
+        }
+
+        .hero h1 .red { color: var(--red); }
+        .hero h1 .green { color: var(--green); }
+        .hero h1 .blue { color: var(--blue); }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            font-family: var(--font-body);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 100px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--glass-bg);
+            border-color: var(--text-secondary);
+        }
+
+        /* TDD Cycle Visual */
+        .cycle-visual {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.5s both;
+        }
+
+        .cycle-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0.6;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .cycle-step:hover {
+            opacity: 1;
+            transform: translateY(-4px);
+        }
+
+        .cycle-step .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            border: 2px solid;
+        }
+
+        .cycle-step.red .icon {
+            border-color: var(--red);
+            background: var(--red-glow);
+            color: var(--red);
+        }
+
+        .cycle-step.green .icon {
+            border-color: var(--green);
+            background: var(--green-glow);
+            color: var(--green);
+        }
+
+        .cycle-step.refactor .icon {
+            border-color: var(--blue);
+            background: var(--blue-glow);
+            color: var(--blue);
+        }
+
+        .cycle-step span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .cycle-arrow {
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+        }
+
+        /* Section Styles */
+        section {
+            padding: var(--section-padding) 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        /* Process Section */
+        .process-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .process-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .process-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .process-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 24px 24px 0 0;
+        }
+
+        .process-card.red::before { background: var(--red); }
+        .process-card.green::before { background: var(--green); }
+        .process-card.refactor::before { background: var(--blue); }
+
+        .process-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .process-card.red:hover { box-shadow: 0 20px 60px var(--red-glow); }
+        .process-card.green:hover { box-shadow: 0 20px 60px var(--green-glow); }
+        .process-card.refactor:hover { box-shadow: 0 20px 60px var(--blue-glow); }
+
+        .process-number {
+            font-family: var(--font-display);
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+
+        .process-card.red .process-number { color: var(--red); }
+        .process-card.green .process-number { color: var(--green); }
+        .process-card.refactor .process-number { color: var(--blue); }
+
+        .process-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .process-card p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .process-command {
+            background: var(--bg-primary);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+
+        .process-command .prompt {
+            color: var(--text-muted);
+        }
+
+        .process-command .command {
+            color: var(--green);
+        }
+
+        /* Code Example Section */
+        .code-section {
+            background: var(--bg-secondary);
+            border-radius: 32px;
+            padding: 4rem;
+            margin: 4rem 0;
+            border: 1px solid var(--glass-border);
+        }
+
+        .code-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .code-tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .code-tab:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+
+        .code-tab.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-color: var(--text-primary);
+        }
+
+        .code-panel {
+            display: none;
+        }
+
+        .code-panel.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .code-filename {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dots span:nth-child(1) { background: var(--red); }
+        .code-dots span:nth-child(2) { background: var(--yellow); }
+        .code-dots span:nth-child(3) { background: var(--green); }
+
+        .code-content {
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .code-content pre {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .code-content .comment { color: var(--text-muted); }
+        .code-content .keyword { color: var(--purple); }
+        .code-content .function { color: var(--blue); }
+        .code-content .string { color: var(--green); }
+        .code-content .number { color: var(--orange); }
+        .code-content .decorator { color: var(--yellow); }
+        .code-content .class-name { color: var(--red); }
+
+        /* Flow Diagram */
+        .flow-section {
+            padding: 4rem 0;
+        }
+
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: stretch;
+            gap: 2rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: flowIn 0.6s ease-out forwards;
+        }
+
+        .flow-step:nth-child(1) { animation-delay: 0.1s; }
+        .flow-step:nth-child(2) { animation-delay: 0.2s; }
+        .flow-step:nth-child(3) { animation-delay: 0.3s; }
+        .flow-step:nth-child(4) { animation-delay: 0.4s; }
+        .flow-step:nth-child(5) { animation-delay: 0.5s; }
+        .flow-step:nth-child(6) { animation-delay: 0.6s; }
+
+        .flow-number {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .flow-content {
+            flex: 1;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .flow-content h4 {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-content p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .flow-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-badge.red { background: var(--red-glow); color: var(--red); }
+        .flow-badge.green { background: var(--green-glow); color: var(--green); }
+        .flow-badge.blue { background: var(--blue-glow); color: var(--blue); }
+
+        /* Key Concepts */
+        .concepts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .concept-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            background: var(--glass-hover);
+        }
+
+        .concept-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(135deg, var(--purple-glow), var(--blue-glow));
+        }
+
+        .concept-card h4 {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .concept-card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-radius: 32px;
+            padding: 4rem;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-item {
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes flowIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 1.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .cycle-visual {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .code-section {
+                padding: 2rem;
+                border-radius: 20px;
+            }
+
+            .process-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <span>TDD</span> Mastery
+        </div>
+        <ul class="nav-links">
+            <li><a href="#process">Process</a></li>
+            <li><a href="#code">Code Examples</a></li>
+            <li><a href="#flow">Validation Flow</a></li>
+            <li><a href="#concepts">Key Concepts</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span>Software Engineering Excellence</span>
+        </div>
+        <h1>
+            <span class="cycle-word red">Red</span> → 
+            <span class="cycle-word green">Green</span> → 
+            <span class="cycle-word blue">Refactor</span>
+        </h1>
+        <p class="hero-subtitle">
+            A comprehensive demonstration of Test-Driven Development methodology, 
+            showcasing real-world validation patterns and professional testing practices.
+        </p>
+        <div class="hero-cta">
+            <a href="#process" class="btn btn-primary">Explore Process →</a>
+            <a href="#code" class="btn btn-secondary">View Code</a>
+        </div>
+
+        <div class="cycle-visual">
+            <div class="cycle-step red">
+                <div class="icon">✗</div>
+                <span>Red</span>
+            </div>
+            <div class="cycle-arrow">→</div>
+            <div class="cycle-step green">
+                <div class="icon">✓</div>
+                <span>Green</span>
+            </div>
+            <div class="cycle-arrow">→</div>
+            <div class="cycle-step refactor">
+                <div class="icon">♻</div>
+                <span>Refactor</span>
+            </div>
+            <div class="cycle-arrow">→</div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section id="process">
+        <div class="section-header reveal">
+            <div class="section-label">The TDD Cycle</div>
+            <h2 class="section-title">Three Steps to Quality Code</h2>
+        </div>
+
+        <div class="process-grid">
+            <div class="process-card red reveal">
+                <div class="process-number">01</div>
+                <h3>Write Failing Test</h3>
+                <p>Define expected behavior before implementation. The test fails because the code doesn't exist yet.</p>
+                <div class="process-command">
+                    <span class="prompt">$</span> <span class="command">python -m pytest tests/test_promo.py -v</span>
+                    <br><br>
+                    <span style="color: var(--red);">FAILED</span> - ModuleNotFoundError
+                </div>
+            </div>
+
+            <div class="process-card green reveal">
+                <div class="process-number">02</div>
+                <h3>Make It Pass</h3>
+                <p>Write the minimum code necessary to make the test pass. No more, no less.</p>
+                <div class="process-command">
+                    <span class="prompt">$</span> <span class="command">python -m pytest tests/test_promo.py -v</span>
+                    <br><br>
+                    <span style="color: var(--green);">PASSED</span> - 15 tests ✓
+                </div>
+            </div>
+
+            <div class="process-card refactor reveal">
+                <div class="process-number">03</div>
+                <h3>Refactor</h3>
+                <p>Improve code quality while keeping all tests green. Tests are your safety net.</p>
+                <div class="process-command">
+                    <span class="prompt">$</span> <span class="command">python -m pytest tests/test_promo.py -v</span>
+                    <br><br>
+                    <span style="color: var(--green);">PASSED</span> - 24 tests ✓
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Examples Section -->
+    <section id="code" class="code-section reveal">
+        <div class="section-header">
+            <div class="section-label">Live Code</div>
+            <h2 class="section-title">Promo Code Validation</h2>
+        </div>
+
+        <div class="code-tabs">
+            <button class="code-tab active" data-tab="test">Test First</button>
+            <button class="code-tab" data-tab="impl">Implementation</button>
+            <button class="code-tab" data-tab="edge">Edge Cases</button>
+        </div>
+
+        <div class="code-panel active" id="test-panel">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-filename">tests/test_promo_code.py</span>
+                    <div class="code-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="code-content">
+<pre><span class="comment"># Step 1: Write the test FIRST (before any implementation)</span>
+
+<span class="keyword">import</span> pytest
+<span class="keyword">from</span> promo_code <span class="keyword">import</span> validate_promo_code, apply_promo_code
+
+<span class="keyword">class</span> <span class="class-name">TestValidatePromoCode</span>:
+    <span class="string">"""Test promo code validation"""</span>
+    
+    <span class="keyword">def</span> <span class="function">test_valid_code_save10</span>(self):
+        <span class="string">"""SAVE10 is a valid code"""</span>
+        result = validate_promo_code(<span class="string">"SAVE10"</span>)
+        <span class="keyword">assert</span> result[<span class="string">"valid"</span>] == <span class="keyword">True</span>
+    
+    <span class="keyword">def</span> <span class="function">test_invalid_code_rejected</span>(self):
+        <span class="string">"""Unknown code should be rejected"""</span>
+        result = validate_promo_code(<span class="string">"FAKECODE"</span>)
+        <span class="keyword">assert</span> result[<span class="string">"valid"</span>] == <span class="keyword">False</span>
+        <span class="keyword">assert</span> <span class="string">"invalid"</span> <span class="keyword">in</span> result[<span class="string">"error"</span>].lower()
+    
+    <span class="keyword">def</span> <span class="function">test_case_insensitive</span>(self):
+        <span class="string">"""Codes should work regardless of case"""</span>
+        result = validate_promo_code(<span class="string">"save10"</span>)  <span class="comment"># lowercase</span>
+        <span class="keyword">assert</span> result[<span class="string">"valid"</span>] == <span class="keyword">True</span></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-panel" id="impl-panel">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-filename">promo_code.py</span>
+                    <div class="code-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="code-content">
+<pre><span class="comment"># Step 2: Write minimum code to pass tests</span>
+
+<span class="keyword">from</span> typing <span class="keyword">import</span> Dict, Any
+
+<span class="comment"># Configuration-driven design</span>
+PROMO_CODES: Dict[<span class="function">str</span>, Dict[<span class="function">str</span>, Any]] = {
+    <span class="string">"SAVE10"</span>: {<span class="string">"discount_percent"</span>: <span class="number">10</span>, <span class="string">"min_tickets"</span>: <span class="number">1</span>},
+    <span class="string">"SAVE20"</span>: {<span class="string">"discount_percent"</span>: <span class="number">20</span>, <span class="string">"min_tickets"</span>: <span class="number">3</span>},
+    <span class="string">"HALF"</span>:   {<span class="string">"discount_percent"</span>: <span class="number">50</span>, <span class="string">"min_tickets"</span>: <span class="number">5</span>},
+    <span class="string">"STUDENT"</span>: {<span class="string">"discount_percent"</span>: <span class="number">15</span>, <span class="string">"requires_id"</span>: <span class="keyword">True</span>},
+}
+
+<span class="keyword">def</span> <span class="function">validate_promo_code</span>(code: <span class="function">str</span>) -> Dict[<span class="function">str</span>, Any]:
+    <span class="string">"""Validate if a promo code exists."""</span>
+    <span class="keyword">if not</span> code <span class="keyword">or not</span> code.strip():
+        <span class="keyword">return</span> {<span class="string">"valid"</span>: <span class="keyword">False</span>, <span class="string">"error"</span>: <span class="string">"Code cannot be empty"</span>}
+    
+    code_upper = code.strip().upper()  <span class="comment"># Normalize input</span>
+    
+    <span class="keyword">if</span> code_upper <span class="keyword">not in</span> PROMO_CODES:
+        <span class="keyword">return</span> {<span class="string">"valid"</span>: <span class="keyword">False</span>, <span class="string">"error"</span>: <span class="string">f"Invalid promo code"</span>}
+    
+    <span class="keyword">return</span> {<span class="string">"valid"</span>: <span class="keyword">True</span>, <span class="string">"code"</span>: code_upper}</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-panel" id="edge-panel">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-filename">tests/test_edge_cases.py</span>
+                    <div class="code-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="code-content">
+<pre><span class="comment"># Step 3: Add comprehensive edge case tests</span>
+
+<span class="keyword">class</span> <span class="class-name">TestEdgeCases</span>:
+    <span class="string">"""Boundary conditions and edge cases"""</span>
+    
+    <span class="keyword">def</span> <span class="function">test_whitespace_trimmed</span>(self):
+        <span class="string">"""Code with whitespace should be trimmed"""</span>
+        result = validate_promo_code(<span class="string">"  SAVE10  "</span>)
+        <span class="keyword">assert</span> result[<span class="string">"valid"</span>] == <span class="keyword">True</span>
+    
+    <span class="keyword">def</span> <span class="function">test_save20_boundary_2_tickets</span>(self):
+        <span class="string">"""SAVE20 with 2 tickets (below minimum) fails"""</span>
+        result = apply_promo_code(<span class="string">"SAVE20"</span>, num_tickets=<span class="number">2</span>)
+        <span class="keyword">assert</span> result[<span class="string">"success"</span>] == <span class="keyword">False</span>
+    
+    <span class="keyword">def</span> <span class="function">test_save20_boundary_3_tickets</span>(self):
+        <span class="string">"""SAVE20 with 3 tickets (at minimum) passes"""</span>
+        result = apply_promo_code(<span class="string">"SAVE20"</span>, num_tickets=<span class="number">3</span>)
+        <span class="keyword">assert</span> result[<span class="string">"success"</span>] == <span class="keyword">True</span>
+    
+    <span class="keyword">def</span> <span class="function">test_student_without_id_fails</span>(self):
+        <span class="string">"""STUDENT code requires valid student ID"""</span>
+        result = apply_promo_code(<span class="string">"STUDENT"</span>, has_student_id=<span class="keyword">False</span>)
+        <span class="keyword">assert</span> result[<span class="string">"success"</span>] == <span class="keyword">False</span>
+        <span class="keyword">assert</span> <span class="string">"student"</span> <span class="keyword">in</span> result[<span class="string">"error"</span>].lower()</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Flow Section -->
+    <section id="flow" class="flow-section">
+        <div class="section-header reveal">
+            <div class="section-label">Validation Flow</div>
+            <h2 class="section-title">Multi-Layer Validation Pipeline</h2>
+        </div>
+
+        <div class="flow-diagram">
+            <div class="flow-step">
+                <div class="flow-number">1</div>
+                <div class="flow-content">
+                    <span class="flow-badge blue">Input</span>
+                    <h4>Normalize Input</h4>
+                    <p>Trim whitespace, convert to uppercase. Handle "save10" → "SAVE10"</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="flow-number">2</div>
+                <div class="flow-content">
+                    <span class="flow-badge red">Validation</span>
+                    <h4>Check Code Exists</h4>
+                    <p>Is "SAVE10" in PROMO_CODES dictionary? Return error if not found.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="flow-number">3</div>
+                <div class="flow-content">
+                    <span class="flow-badge red">Validation</span>
+                    <h4>Check Minimum Tickets</h4>
+                    <p>SAVE20 requires 3+ tickets. HALF requires 5+ tickets.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="flow-number">4</div>
+                <div class="flow-content">
+                    <span class="flow-badge red">Validation</span>
+                    <h4>Check Special Requirements</h4>
+                    <p>STUDENT code requires valid student ID verification.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="flow-number">5</div>
+                <div class="flow-content">
+                    <span class="flow-badge green">Calculate</span>
+                    <h4>Compute Discount</h4>
+                    <p>total × (discount_percent / 100) = discount amount</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="flow-number">6</div>
+                <div class="flow-content">
+                    <span class="flow-badge green">Response</span>
+                    <h4>Return Structured Result</h4>
+                    <p>{success, discount, final_price, error} — API-ready response</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Concepts -->
+    <section id="concepts">
+        <div class="section-header reveal">
+            <div class="section-label">Expertise</div>
+            <h2 class="section-title">Key Testing Patterns</h2>
+        </div>
+
+        <div class="concepts-grid">
+            <div class="concept-card reveal">
+                <div class="concept-icon">🎯</div>
+                <h4>Boundary Testing</h4>
+                <p>Test both sides of every threshold. 2 tickets (fail) vs 3 tickets (pass) for SAVE20.</p>
+            </div>
+
+            <div class="concept-card reveal">
+                <div class="concept-icon">⚡</div>
+                <h4>Input Normalization</h4>
+                <p>Handle messy user input: lowercase, whitespace, mixed case. Users make mistakes.</p>
+            </div>
+
+            <div class="concept-card reveal">
+                <div class="concept-icon">🔧</div>
+                <h4>Configuration-Driven</h4>
+                <p>Data in dictionaries, not hardcoded if/else. Adding new codes requires no logic changes.</p>
+            </div>
+
+            <div class="concept-card reveal">
+                <div class="concept-icon">📦</div>
+                <h4>Structured Responses</h4>
+                <p>Return rich objects: {success, data, error}. API-ready from day one.</p>
+            </div>
+
+            <div class="concept-card reveal">
+                <div class="concept-icon">🔐</div>
+                <h4>Conditional Logic</h4>
+                <p>STUDENT code requires ID verification. Test with and without requirements.</p>
+            </div>
+
+            <div class="concept-card reveal">
+                <div class="concept-icon">📝</div>
+                <h4>Tests as Documentation</h4>
+                <p>Test names describe behavior. "test_save20_requires_3_tickets" is self-documenting.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="reveal">
+        <div class="stats-section">
+            <div class="section-header">
+                <div class="section-label">By The Numbers</div>
+                <h2 class="section-title">Comprehensive Coverage</h2>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Test Cases</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Validation Layers</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Functions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Coverage</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">TDD Mastery</div>
+            <p class="footer-text">
+                Test-Driven Development Portfolio<br>
+                Red → Green → Refactor
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.code-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active from all tabs
+                document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active'));
+                
+                // Add active to clicked tab
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-panel').classList.add('active');
+            });
+        });
+
+        // Scroll reveal animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

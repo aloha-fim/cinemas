@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDD Refactoring Mastery | Code Evolution Through Testing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0b;
+            --bg-card: #111113;
+            --bg-elevated: #18181b;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            
+            --text-primary: #fafafa;
+            --text-secondary: rgba(250, 250, 250, 0.6);
+            --text-muted: rgba(250, 250, 250, 0.35);
+            
+            --red: #ef4444;
+            --red-soft: rgba(239, 68, 68, 0.15);
+            --green: #22c55e;
+            --green-soft: rgba(34, 197, 94, 0.15);
+            --blue: #3b82f6;
+            --blue-soft: rgba(59, 130, 246, 0.15);
+            --purple: #a855f7;
+            --purple-soft: rgba(168, 85, 247, 0.15);
+            --amber: #f59e0b;
+            --amber-soft: rgba(245, 158, 11, 0.15);
+            --cyan: #06b6d4;
+            --cyan-soft: rgba(6, 182, 212, 0.15);
+            
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse 100% 100% at 0% 0%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 80% at 100% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 60% at 100% 100%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 80% at 0% 100%, rgba(239, 68, 68, 0.04) 0%, transparent 50%);
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-logo .icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--purple-soft);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--purple);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+            width: fit-content;
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--purple), var(--blue), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            font-family: var(--font-body);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 100px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-elevated);
+            border-color: var(--border-hover);
+        }
+
+        /* TDD Cycle Banner */
+        .cycle-banner {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        .cycle-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            transition: all 0.3s;
+        }
+
+        .cycle-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+        }
+
+        .cycle-item.red { border-left: 3px solid var(--red); }
+        .cycle-item.green { border-left: 3px solid var(--green); }
+        .cycle-item.refactor { border-left: 3px solid var(--blue); }
+
+        .cycle-item .num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .cycle-item.red .num { background: var(--red-soft); color: var(--red); }
+        .cycle-item.green .num { background: var(--green-soft); color: var(--green); }
+        .cycle-item.refactor .num { background: var(--blue-soft); color: var(--blue); }
+
+        .cycle-item .label {
+            font-weight: 600;
+            font-size: 0.9375rem;
+        }
+
+        .cycle-arrow {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            align-self: center;
+        }
+
+        /* Section Styling */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        /* Evolution Timeline */
+        .evolution-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            padding: 3rem;
+            margin: 4rem 0;
+        }
+
+        .evolution-timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+
+        .evolution-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--red), var(--green), var(--blue), var(--purple));
+            border-radius: 2px;
+        }
+
+        .evolution-step {
+            position: relative;
+            padding-bottom: 3rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .evolution-step:nth-child(1) { animation-delay: 0.1s; }
+        .evolution-step:nth-child(2) { animation-delay: 0.2s; }
+        .evolution-step:nth-child(3) { animation-delay: 0.3s; }
+        .evolution-step:nth-child(4) { animation-delay: 0.4s; }
+        .evolution-step:nth-child(5) { animation-delay: 0.5s; }
+        .evolution-step:nth-child(6) { animation-delay: 0.6s; }
+
+        .evolution-step:last-child {
+            padding-bottom: 0;
+        }
+
+        .evolution-step::before {
+            content: '';
+            position: absolute;
+            left: -3rem;
+            top: 0.25rem;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 3px solid;
+            background: var(--bg-card);
+            transform: translateX(-6px);
+        }
+
+        .evolution-step.red::before { border-color: var(--red); }
+        .evolution-step.green::before { border-color: var(--green); }
+        .evolution-step.refactor::before { border-color: var(--blue); }
+
+        .evolution-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .evolution-badge.red { background: var(--red-soft); color: var(--red); }
+        .evolution-badge.green { background: var(--green-soft); color: var(--green); }
+        .evolution-badge.refactor { background: var(--blue-soft); color: var(--blue); }
+
+        .evolution-step h3 {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .evolution-step p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 1rem;
+        }
+
+        .evolution-code {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            overflow-x: auto;
+            color: var(--text-secondary);
+        }
+
+        .evolution-code .comment { color: var(--text-muted); }
+        .evolution-code .keyword { color: var(--purple); }
+        .evolution-code .function { color: var(--blue); }
+        .evolution-code .string { color: var(--green); }
+        .evolution-code .number { color: var(--amber); }
+        .evolution-code .const { color: var(--cyan); }
+
+        /* Code Comparison */
+        .code-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 4rem 0;
+        }
+
+        @media (max-width: 800px) {
+            .code-compare {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .code-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .code-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        .code-panel-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .code-panel.before .dot { background: var(--red); }
+        .code-panel.after .dot { background: var(--green); }
+
+        .code-panel-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .code-panel.before .code-panel-badge {
+            background: var(--red-soft);
+            color: var(--red);
+        }
+
+        .code-panel.after .code-panel-badge {
+            background: var(--green-soft);
+            color: var(--green);
+        }
+
+        .code-panel-content {
+            padding: 1.25rem;
+        }
+
+        .code-panel-content pre {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+        }
+
+        /* Benefits Grid */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .benefits-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .benefit-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            transition: all 0.3s;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+            background: var(--bg-elevated);
+        }
+
+        .benefit-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .benefit-card:nth-child(1) .benefit-icon { background: var(--red-soft); }
+        .benefit-card:nth-child(2) .benefit-icon { background: var(--green-soft); }
+        .benefit-card:nth-child(3) .benefit-icon { background: var(--blue-soft); }
+        .benefit-card:nth-child(4) .benefit-icon { background: var(--purple-soft); }
+        .benefit-card:nth-child(5) .benefit-icon { background: var(--amber-soft); }
+        .benefit-card:nth-child(6) .benefit-icon { background: var(--cyan-soft); }
+
+        .benefit-card h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .benefit-card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            margin: 4rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        /* Pricing Table */
+        .pricing-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .pricing-table th,
+        .pricing-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing-table th {
+            background: var(--bg-elevated);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .pricing-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .pricing-table td:first-child {
+            font-weight: 600;
+        }
+
+        .price-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--green-soft);
+            color: var(--green);
+            border-radius: 100px;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-logo {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.6s ease-out forwards;
+        }
+
+        .fade-up:nth-child(1) { animation-delay: 0.1s; }
+        .fade-up:nth-child(2) { animation-delay: 0.2s; }
+        .fade-up:nth-child(3) { animation-delay: 0.3s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .cycle-banner {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cycle-arrow {
+                transform: rotate(90deg);
+            }
+
+            .evolution-section {
+                padding: 1.5rem;
+            }
+
+            .evolution-timeline {
+                padding-left: 2rem;
+            }
+
+            .evolution-step::before {
+                left: -2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <div class="nav-logo">
+                <div class="icon">♻</div>
+                <span>TDD Refactoring</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#evolution">Evolution</a></li>
+                <li><a href="#compare">Before/After</a></li>
+                <li><a href="#benefits">Benefits</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-eyebrow">
+            <span>🔄</span> Refactoring Focus
+        </div>
+        <h1>
+            Code That <span class="highlight">Evolves</span><br>
+            While Tests <span class="highlight">Protect</span>
+        </h1>
+        <p class="hero-subtitle">
+            Watch how showtime pricing code transforms from quick-and-dirty to 
+            production-grade through disciplined TDD refactoring.
+        </p>
+        <div class="hero-actions">
+            <a href="#evolution" class="btn btn-primary">See the Evolution →</a>
+            <a href="#compare" class="btn btn-ghost">Before & After</a>
+        </div>
+
+        <div class="cycle-banner">
+            <div class="cycle-item red">
+                <div class="num">1</div>
+                <div class="label">Write Failing Test</div>
+            </div>
+            <div class="cycle-arrow">→</div>
+            <div class="cycle-item green">
+                <div class="num">2</div>
+                <div class="label">Make It Pass</div>
+            </div>
+            <div class="cycle-arrow">→</div>
+            <div class="cycle-item refactor">
+                <div class="num">3</div>
+                <div class="label">Refactor Safely</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Requirement -->
+    <section>
+        <div class="section-header">
+            <div class="section-label">The Feature</div>
+            <h2 class="section-title">Dynamic Showtime Pricing</h2>
+        </div>
+
+        <table class="pricing-table">
+            <thead>
+                <tr>
+                    <th>Time Slot</th>
+                    <th>Hours</th>
+                    <th>Price</th>
+                    <th>Priority</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>🎄 Holiday</td>
+                    <td>Special dates</td>
+                    <td><span class="price-tag">$15</span></td>
+                    <td>Highest</td>
+                </tr>
+                <tr>
+                    <td>📅 Weekend</td>
+                    <td>Sat & Sun (all day)</td>
+                    <td><span class="price-tag">$14</span></td>
+                    <td>High</td>
+                </tr>
+                <tr>
+                    <td>🌙 Late Night</td>
+                    <td>After 10:00 PM</td>
+                    <td><span class="price-tag">$10</span></td>
+                    <td>Medium</td>
+                </tr>
+                <tr>
+                    <td>🌆 Evening</td>
+                    <td>5:00 PM – 10:00 PM</td>
+                    <td><span class="price-tag">$12</span></td>
+                    <td>Medium</td>
+                </tr>
+                <tr>
+                    <td>☀️ Matinee</td>
+                    <td>Before 5:00 PM</td>
+                    <td><span class="price-tag">$8</span></td>
+                    <td>Base</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Evolution Timeline -->
+    <section id="evolution">
+        <div class="section-header">
+            <div class="section-label">The Journey</div>
+            <h2 class="section-title">6-Step Refactoring Evolution</h2>
+        </div>
+
+        <div class="evolution-section">
+            <div class="evolution-timeline">
+                <!-- Step 1 -->
+                <div class="evolution-step red">
+                    <span class="evolution-badge red">Red Phase</span>
+                    <h3>Step 1: Write Tests First</h3>
+                    <p>Define expected behavior before any implementation exists.</p>
+                    <div class="evolution-code">
+<span class="keyword">def</span> <span class="function">test_matinee_price_at_2pm</span>(self):
+    <span class="string">"""2:00 PM on Monday = Matinee = $8"""</span>
+    showtime = datetime(<span class="number">2024</span>, <span class="number">1</span>, <span class="number">8</span>, <span class="number">14</span>, <span class="number">0</span>)
+    price = get_ticket_price(showtime)
+    <span class="keyword">assert</span> price == <span class="number">8.0</span>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="evolution-step green">
+                    <span class="evolution-badge green">Green Phase</span>
+                    <h3>Step 2: Quick & Dirty Implementation</h3>
+                    <p>Make tests pass with the simplest possible code. Ugly is OK!</p>
+                    <div class="evolution-code">
+<span class="comment"># Version 1: Works but has magic numbers</span>
+<span class="keyword">def</span> <span class="function">get_ticket_price</span>(showtime):
+    hour = showtime.hour
+    <span class="keyword">if</span> hour < <span class="number">17</span>:  <span class="comment"># Magic number!</span>
+        <span class="keyword">return</span> <span class="number">8.0</span>   <span class="comment"># Magic number!</span>
+    <span class="keyword">elif</span> hour < <span class="number">22</span>:
+        <span class="keyword">return</span> <span class="number">12.0</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="number">10.0</span>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="evolution-step refactor">
+                    <span class="evolution-badge refactor">Refactor #1</span>
+                    <h3>Step 3: Extract Constants</h3>
+                    <p>Replace magic numbers with named constants. Tests stay green!</p>
+                    <div class="evolution-code">
+<span class="comment"># Version 2: Constants extracted</span>
+<span class="const">MATINEE_PRICE</span> = <span class="number">8.0</span>
+<span class="const">EVENING_PRICE</span> = <span class="number">12.0</span>
+<span class="const">EVENING_START_HOUR</span> = <span class="number">17</span>
+
+<span class="keyword">def</span> <span class="function">get_ticket_price</span>(showtime):
+    <span class="keyword">if</span> hour < <span class="const">EVENING_START_HOUR</span>:
+        <span class="keyword">return</span> <span class="const">MATINEE_PRICE</span>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="evolution-step refactor">
+                    <span class="evolution-badge refactor">Refactor #2</span>
+                    <h3>Step 4: Separate Concerns</h3>
+                    <p>Extract "what slot" from "what price". Each function does ONE thing.</p>
+                    <div class="evolution-code">
+<span class="comment"># Version 4: Single Responsibility</span>
+<span class="keyword">def</span> <span class="function">get_time_slot</span>(showtime) -> TimeSlot:
+    <span class="string">"""Determine WHAT time slot"""</span>
+    ...
+
+<span class="keyword">def</span> <span class="function">get_ticket_price</span>(showtime) -> <span class="keyword">float</span>:
+    <span class="string">"""Get HOW MUCH to charge"""</span>
+    slot = get_time_slot(showtime)
+    <span class="keyword">return</span> <span class="const">PRICES</span>[slot]
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="evolution-step green">
+                    <span class="evolution-badge green">Add Feature</span>
+                    <h3>Step 5: Add Holiday Support</h3>
+                    <p>New tests for holidays, then implement. Tests guide the design.</p>
+                    <div class="evolution-code">
+<span class="keyword">def</span> <span class="function">test_christmas_day</span>(self):
+    <span class="string">"""Christmas Day = Holiday = $15"""</span>
+    showtime = datetime(<span class="number">2024</span>, <span class="number">12</span>, <span class="number">25</span>, <span class="number">14</span>, <span class="number">0</span>)
+    price = get_ticket_price(showtime)
+    <span class="keyword">assert</span> price == <span class="number">15.0</span>
+                    </div>
+                </div>
+
+                <!-- Step 6 -->
+                <div class="evolution-step refactor">
+                    <span class="evolution-badge refactor">Refactor #3</span>
+                    <h3>Step 6: Configuration-Driven Design</h3>
+                    <p>Replace if/else chains with a rule engine. Adding new pricing tiers requires ZERO logic changes!</p>
+                    <div class="evolution-code">
+<span class="comment"># Version 6: Professional-grade, extensible</span>
+<span class="keyword">class</span> <span class="function">ShowtimePricing</span>:
+    rules: List[PricingRule]
+    
+    <span class="keyword">def</span> <span class="function">add_rule</span>(self, rule):
+        <span class="string">"""Add new pricing rule - no code changes!"""</span>
+    
+    <span class="keyword">def</span> <span class="function">get_price</span>(self, showtime):
+        <span class="string">"""First matching rule wins"""</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Before/After Comparison -->
+    <section id="compare">
+        <div class="section-header">
+            <div class="section-label">The Transformation</div>
+            <h2 class="section-title">Before & After Refactoring</h2>
+        </div>
+
+        <div class="code-compare">
+            <div class="code-panel before">
+                <div class="code-panel-header">
+                    <div class="code-panel-title">
+                        <span class="dot"></span>
+                        Version 1
+                    </div>
+                    <span class="code-panel-badge">Before</span>
+                </div>
+                <div class="code-panel-content">
+<pre><span class="comment"># ❌ Magic numbers everywhere</span>
+<span class="comment"># ❌ Hard to modify prices</span>
+<span class="comment"># ❌ Can't add new tiers easily</span>
+<span class="comment"># ❌ No documentation</span>
+
+<span class="keyword">def</span> <span class="function">get_ticket_price</span>(showtime):
+    hour = showtime.hour
+    day = showtime.weekday()
+    
+    <span class="keyword">if</span> (showtime.month, showtime.day) <span class="keyword">in</span> [
+        (<span class="number">1</span>, <span class="number">1</span>), (<span class="number">12</span>, <span class="number">25</span>), (<span class="number">7</span>, <span class="number">4</span>)
+    ]:
+        <span class="keyword">return</span> <span class="number">15.0</span>
+    <span class="keyword">if</span> day >= <span class="number">5</span>:
+        <span class="keyword">return</span> <span class="number">14.0</span>
+    <span class="keyword">if</span> hour < <span class="number">17</span>:
+        <span class="keyword">return</span> <span class="number">8.0</span>
+    <span class="keyword">elif</span> hour < <span class="number">22</span>:
+        <span class="keyword">return</span> <span class="number">12.0</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="number">10.0</span></pre>
+                </div>
+            </div>
+
+            <div class="code-panel after">
+                <div class="code-panel-header">
+                    <div class="code-panel-title">
+                        <span class="dot"></span>
+                        Version 6
+                    </div>
+                    <span class="code-panel-badge">After</span>
+                </div>
+                <div class="code-panel-content">
+<pre><span class="comment"># ✅ Self-documenting rules</span>
+<span class="comment"># ✅ Change prices in config</span>
+<span class="comment"># ✅ Add tiers with add_rule()</span>
+<span class="comment"># ✅ Priority-based matching</span>
+
+<span class="keyword">@dataclass</span>
+<span class="keyword">class</span> <span class="function">PricingRule</span>:
+    name: <span class="keyword">str</span>
+    price: <span class="keyword">float</span>
+    description: <span class="keyword">str</span>
+    priority: <span class="keyword">int</span>
+    condition: Callable
+
+<span class="keyword">class</span> <span class="function">ShowtimePricing</span>:
+    <span class="keyword">def</span> <span class="function">add_rule</span>(self, rule):
+        <span class="string">"""Extensible!"""</span>
+    
+    <span class="keyword">def</span> <span class="function">get_price</span>(self, showtime):
+        rule = self._find_matching_rule(showtime)
+        <span class="keyword">return</span> rule.price</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits -->
+    <section id="benefits">
+        <div class="section-header">
+            <div class="section-label">Why Refactor</div>
+            <h2 class="section-title">Refactoring Principles Demonstrated</h2>
+        </div>
+
+        <div class="benefits-grid">
+            <div class="benefit-card fade-up">
+                <div class="benefit-icon">🔢</div>
+                <h4>Extract Constants</h4>
+                <p>Replace magic numbers with named values. Easy to find, easy to change.</p>
+            </div>
+
+            <div class="benefit-card fade-up">
+                <div class="benefit-icon">🎯</div>
+                <h4>Single Responsibility</h4>
+                <p>Each function does ONE thing. get_time_slot() vs get_price().</p>
+            </div>
+
+            <div class="benefit-card fade-up">
+                <div class="benefit-icon">📊</div>
+                <h4>Configuration over Code</h4>
+                <p>Data-driven rules. Add pricing tiers without changing logic.</p>
+            </div>
+
+            <div class="benefit-card fade-up">
+                <div class="benefit-icon">🔓</div>
+                <h4>Open/Closed Principle</h4>
+                <p>Open for extension, closed for modification. add_rule() not edit code.</p>
+            </div>
+
+            <div class="benefit-card fade-up">
+                <div class="benefit-icon">🧪</div>
+                <h4>Tests as Safety Net</h4>
+                <p>17 tests ensure refactors don't break functionality. Fearless changes.</p>
+            </div>
+
+            <div class="benefit-card fade-up">
+                <div class="benefit-icon">📖</div>
+                <h4>Self-Documenting</h4>
+                <p>PricingRule with name, description, priority IS the documentation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section>
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Versions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">17</div>
+                <div class="stat-label">Tests</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Refactors</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Coverage</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-logo">TDD Refactoring Mastery</div>
+        <p class="footer-text">
+            Red → Green → Refactor → Repeat<br>
+            Code evolves. Tests protect.
+        </p>
+    </footer>
+
+    <script>
+        // Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-up, .evolution-step').forEach(el => {
+            el.style.animationPlayState = 'paused';
+            observer.observe(el);
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

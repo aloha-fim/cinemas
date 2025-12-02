@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Select Seats - GIC Cinemas{% endblock %}
+
+{% block content %}
+<section class="hero" style="padding-bottom: var(--space-xl);">
+    <h1 class="display-title hero-title animate-fade-up">
+        Select <span class="text-gradient">Your Seats</span>
+    </h1>
+    <p class="display-subtitle hero-subtitle">{{ movie.title }} · {{ num_tickets }} ticket{% if num_tickets > 1 %}s{% endif %}</p>
+</section>
+
+{% if error %}
+<section class="container-medium mb-xl">
+    <div class="alert alert-error animate-fade-up">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-content">{{ error }}</div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Seating Map -->
+<section class="container-medium animate-fade-up delay-1">
+    <div class="seating-container">
+        <div class="screen"></div>
+        
+        <div class="seating-grid">
+            {% for row_letter, row_seats in seating_map|dictsort(reverse=true) %}
+            <div class="seat-row">
+                <span class="row-label">{{ row_letter }}</span>
+                {% for seat in row_seats %}
+                <div class="seat {% if seat.status == 'selected' %}seat-selected{% elif seat.status == 'booked' %}seat-booked{% else %}seat-available{% endif %}">
+                    {% if seat.status == 'selected' %}o{% elif seat.status == 'booked' %}#{% else %}.{% endif %}
+                </div>
+                {% endfor %}
+                <span class="row-label">{{ row_letter }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Seat Numbers -->
+        <div class="seat-numbers">
+            {% for i in range(1, movie.seats_per_row + 1) %}
+            <span class="seat-number">{{ i }}</span>
+            {% endfor %}
+        </div>
+        
+        <!-- Legend -->
+        <div class="seating-legend">
+            <div class="legend-item">
+                <span class="legend-dot legend-dot-available"></span>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot legend-dot-selected"></span>
+                <span>Your Selection</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot legend-dot-booked"></span>
+                <span>Booked</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Selected Seats Display -->
+<section class="container-narrow mt-2xl animate-fade-up delay-2">
+    <div class="card card-glow">
+        <div class="text-center mb-xl">
+            <div class="text-label mb-md">Selected Seats</div>
+            <div class="seats-chips">
+                {% for seat in selected_seats %}
+                <span class="seat-chip">{{ seat.row_letter }}{{ seat.seat_number }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Change Position -->
+        <form method="POST" action="/book/change-position" class="mb-xl" style="border-bottom: 1px solid var(--glass-border); padding-bottom: var(--space-xl);">
+            <input type="hidden" name="num_tickets" value="{{ num_tickets }}">
+            <div class="form-group">
+                <label class="form-label" for="start_position">Custom Starting Position</label>
+                <input 
+                    type="text" 
+                    id="start_position" 
+                    name="start_position" 
+                    class="form-input form-input-mono"
+                    placeholder="e.g. A1, B5"
+                    pattern="[A-Za-z][0-9]+"
+                >
+                <p class="form-hint">Want different seats? Enter a starting position</p>
+            </div>
+            <button type="submit" class="btn btn-secondary w-full">
+                Relocate Seats
+            </button>
+        </form>
+        
+        <!-- Confirm -->
+        <form method="POST" action="/book/confirm">
+            <input type="hidden" name="seat_ids" value="{{ seat_ids }}">
+            <button type="submit" class="btn btn-primary btn-lg w-full btn-arrow">
+                Confirm Booking <span class="arrow">→</span>
+            </button>
+        </form>
+    </div>
+</section>
+
+<section class="text-center mt-xl animate-fade-up delay-3">
+    <a href="/book" class="btn btn-ghost">← Change Ticket Count</a>
+</section>
+{% endblock %}

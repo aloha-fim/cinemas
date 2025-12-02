@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GIC Cinemas - Premium Movie Booking Experience">
+    <title>{% block title %}GIC Cinemas{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Immersive Background Blobs -->
+    <div class="blob-1" aria-hidden="true"></div>
+    <div class="blob-2" aria-hidden="true"></div>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header class="site-header">
+            <a href="/" class="logo">
+                <div class="logo-icon">🎬</div>
+                <div class="logo-text">GIC <span>Cinemas</span></div>
+            </a>
+            <nav class="nav-actions">
+                {% block nav_actions %}
+                <a href="/" class="btn btn-ghost">Home</a>
+                {% endblock %}
+            </nav>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+        
+        <!-- Footer -->
+        <footer class="site-footer">
+            <p class="footer-content">© 2024 <span class="footer-brand">GIC Cinemas</span> · Crafted with precision</p>
+        </footer>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

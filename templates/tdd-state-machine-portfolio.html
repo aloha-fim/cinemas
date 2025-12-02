@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Machine TDD | Seat Reservation System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-black: #000000;
+            --bg-dark: #050505;
+            --bg-card: #0a0a0a;
+            --bg-elevated: #111111;
+            --bg-hover: #171717;
+            
+            --border-dim: rgba(255, 255, 255, 0.03);
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-default: rgba(255, 255, 255, 0.1);
+            --border-bright: rgba(255, 255, 255, 0.15);
+            
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+            --text-muted: rgba(255, 255, 255, 0.2);
+            
+            /* State Colors */
+            --available: #22c55e;
+            --available-soft: rgba(34, 197, 94, 0.12);
+            --held: #f59e0b;
+            --held-soft: rgba(245, 158, 11, 0.12);
+            --reserved: #8b5cf6;
+            --reserved-soft: rgba(139, 92, 246, 0.12);
+            --unavailable: #6b7280;
+            --unavailable-soft: rgba(107, 114, 128, 0.12);
+            
+            /* Accent */
+            --accent: #3b82f6;
+            --accent-soft: rgba(59, 130, 246, 0.12);
+            --error: #ef4444;
+            --error-soft: rgba(239, 68, 68, 0.12);
+            
+            --font-sans: 'Geist', -apple-system, sans-serif;
+            --font-mono: 'Geist Mono', monospace;
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+            --radius-2xl: 28px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-black);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Background */
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse 50% 50% at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 40% at 80% 30%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 45% 45% at 50% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0.875rem 2rem;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            font-weight: 700;
+            font-size: 0.9375rem;
+        }
+
+        .nav-logo-states {
+            display: flex;
+            gap: 3px;
+        }
+
+        .nav-logo-states span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .nav-logo-states span:nth-child(1) { background: var(--available); }
+        .nav-logo-states span:nth-child(2) { background: var(--held); }
+        .nav-logo-states span:nth-child(3) { background: var(--reserved); }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.875rem;
+            background: var(--accent-soft);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 7vw, 4.5rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--available) 0%, var(--held) 50%, var(--reserved) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.0625rem;
+            color: var(--text-secondary);
+            max-width: 550px;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-black);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-default);
+        }
+
+        .btn-outline:hover { background: var(--bg-elevated); }
+
+        /* State Diagram */
+        .state-diagram {
+            margin-top: 4rem;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .diagram-title {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .diagram-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .state-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-elevated);
+            border: 2px solid;
+            border-radius: var(--radius-lg);
+            min-width: 100px;
+        }
+
+        .state-node.available { border-color: var(--available); }
+        .state-node.held { border-color: var(--held); }
+        .state-node.reserved { border-color: var(--reserved); }
+
+        .state-node .icon {
+            font-size: 1.25rem;
+        }
+
+        .state-node .label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        .state-node.available .label { color: var(--available); }
+        .state-node.held .label { color: var(--held); }
+        .state-node.reserved .label { color: var(--reserved); }
+
+        .state-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+        }
+
+        .state-arrow .arrow { font-size: 1.25rem; }
+        .state-arrow .action {
+            font-size: 0.625rem;
+            font-family: var(--font-mono);
+            color: var(--text-tertiary);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-tag {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        /* Evolution Cards */
+        .evolution-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .evolution-item {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            transition: all 0.3s;
+        }
+
+        .evolution-item:hover {
+            border-color: var(--border-default);
+            background: var(--bg-elevated);
+        }
+
+        @media (max-width: 700px) {
+            .evolution-item {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        .evolution-version {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 70px;
+        }
+
+        .version-num {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-tertiary);
+        }
+
+        .version-badge {
+            padding: 0.2rem 0.625rem;
+            border-radius: 100px;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .version-badge.refactor {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .version-badge.feature {
+            background: var(--available-soft);
+            color: var(--available);
+        }
+
+        .evolution-content h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .evolution-content p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 1rem;
+        }
+
+        .code-block {
+            background: var(--bg-black);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.7;
+            overflow-x: auto;
+            color: var(--text-secondary);
+        }
+
+        .code-block .kw { color: #c084fc; }
+        .code-block .fn { color: #60a5fa; }
+        .code-block .str { color: #4ade80; }
+        .code-block .cm { color: var(--text-muted); }
+        .code-block .cls { color: #f472b6; }
+        .code-block .num { color: #fbbf24; }
+
+        /* Transition Table */
+        .transition-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            padding: 3rem;
+            margin: 4rem 0;
+        }
+
+        .transition-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .transition-table th,
+        .transition-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .transition-table th {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            background: var(--bg-elevated);
+        }
+
+        .transition-table th:first-child { border-radius: var(--radius-md) 0 0 0; }
+        .transition-table th:last-child { border-radius: 0 var(--radius-md) 0 0; }
+
+        .transition-table tr:last-child td { border-bottom: none; }
+
+        .transition-table td:first-child { font-weight: 600; }
+
+        .state-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .state-badge.available { background: var(--available-soft); color: var(--available); }
+        .state-badge.held { background: var(--held-soft); color: var(--held); }
+        .state-badge.reserved { background: var(--reserved-soft); color: var(--reserved); }
+
+        .check { color: var(--available); }
+        .cross { color: var(--error); }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-default);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card:nth-child(1) .feature-icon { background: var(--available-soft); }
+        .feature-card:nth-child(2) .feature-icon { background: var(--held-soft); }
+        .feature-card:nth-child(3) .feature-icon { background: var(--reserved-soft); }
+        .feature-card:nth-child(4) .feature-icon { background: var(--accent-soft); }
+        .feature-card:nth-child(5) .feature-icon { background: var(--error-soft); }
+        .feature-card:nth-child(6) .feature-icon { background: var(--unavailable-soft); }
+
+        .feature-card h4 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+        }
+
+        /* Stats */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            margin: 4rem 0;
+        }
+
+        @media (max-width: 600px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: clamp(2rem, 4vw, 2.75rem);
+            font-weight: 800;
+        }
+
+        .stat:nth-child(1) .stat-value { color: var(--available); }
+        .stat:nth-child(2) .stat-value { color: var(--held); }
+        .stat:nth-child(3) .stat-value { color: var(--reserved); }
+        .stat:nth-child(4) .stat-value { color: var(--accent); }
+
+        .stat-label {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .footer-states {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .footer-states span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .footer-states span:nth-child(1) { background: var(--available); }
+        .footer-states span:nth-child(2) { background: var(--held); }
+        .footer-states span:nth-child(3) { background: var(--reserved); }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+
+        /* Animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="bg-glow"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-logo">
+                <div class="nav-logo-states">
+                    <span></span><span></span><span></span>
+                </div>
+                <span>State Machine TDD</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#evolution">Evolution</a></li>
+                <li><a href="#transitions">Transitions</a></li>
+                <li><a href="#features">Features</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">🎟️ 4 Refactoring Iterations</div>
+        <h1>
+            <span class="gradient">State Machine</span><br>
+            Through TDD
+        </h1>
+        <p class="hero-subtitle">
+            Build a seat reservation system with holds, expirations, and 
+            state transitions — all driven by tests.
+        </p>
+        <div class="hero-actions">
+            <a href="#evolution" class="btn btn-primary">See Evolution →</a>
+            <a href="#transitions" class="btn btn-outline">Transition Table</a>
+        </div>
+
+        <!-- State Diagram -->
+        <div class="state-diagram">
+            <div class="diagram-title">State Flow</div>
+            <div class="diagram-flow">
+                <div class="state-node available">
+                    <span class="icon">✓</span>
+                    <span class="label">Available</span>
+                </div>
+                <div class="state-arrow">
+                    <span class="action">hold()</span>
+                    <span class="arrow">→</span>
+                </div>
+                <div class="state-node held">
+                    <span class="icon">⏳</span>
+                    <span class="label">Held</span>
+                </div>
+                <div class="state-arrow">
+                    <span class="action">reserve()</span>
+                    <span class="arrow">→</span>
+                </div>
+                <div class="state-node reserved">
+                    <span class="icon">🎫</span>
+                    <span class="label">Reserved</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Evolution -->
+    <section id="evolution">
+        <div class="section-header">
+            <div class="section-tag">The Journey</div>
+            <h2 class="section-title">From Strings to State Pattern</h2>
+        </div>
+
+        <div class="evolution-list">
+            <div class="evolution-item fade-in">
+                <div class="evolution-version">
+                    <div class="version-num">V1</div>
+                    <span class="version-badge feature">Start</span>
+                </div>
+                <div class="evolution-content">
+                    <h3>String-Based Status</h3>
+                    <p>Simple but error-prone. Magic strings everywhere.</p>
+                    <div class="code-block">
+self.status = <span class="str">"available"</span>  <span class="cm"># Magic string!</span>
+self.status = <span class="str">"held"</span>
+self.status = <span class="str">"avalable"</span>  <span class="cm"># Typo compiles!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="evolution-item fade-in">
+                <div class="evolution-version">
+                    <div class="version-num">V2</div>
+                    <span class="version-badge refactor">Refactor</span>
+                </div>
+                <div class="evolution-content">
+                    <h3>Enum-Based Status</h3>
+                    <p>Type safety prevents typos. IDE autocomplete works.</p>
+                    <div class="code-block">
+<span class="kw">class</span> <span class="cls">SeatStatus</span>(Enum):
+    AVAILABLE = auto()
+    HELD = auto()
+    RESERVED = auto()
+
+self._status = SeatStatus.AVAILABLE  <span class="cm"># Type-safe!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="evolution-item fade-in">
+                <div class="evolution-version">
+                    <div class="version-num">V4</div>
+                    <span class="version-badge refactor">Refactor</span>
+                </div>
+                <div class="evolution-content">
+                    <h3>Transition Table</h3>
+                    <p>Declarative rules. See all valid transitions at a glance.</p>
+                    <div class="code-block">
+<span class="cls">VALID_TRANSITIONS</span> = {
+    SeatStatus.AVAILABLE: {SeatStatus.HELD},
+    SeatStatus.HELD: {SeatStatus.RESERVED, SeatStatus.AVAILABLE},
+    SeatStatus.RESERVED: {SeatStatus.AVAILABLE},
+}
+                    </div>
+                </div>
+            </div>
+
+            <div class="evolution-item fade-in">
+                <div class="evolution-version">
+                    <div class="version-num">V6</div>
+                    <span class="version-badge refactor">Refactor</span>
+                </div>
+                <div class="evolution-content">
+                    <h3>Injectable Time Provider</h3>
+                    <p>Test expiration without waiting. Mock time for instant tests.</p>
+                    <div class="code-block">
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="cls">SeatConfig</span>:
+    hold_timeout_minutes: <span class="kw">int</span> = <span class="num">5</span>
+    time_provider: Callable = datetime.now  <span class="cm"># Injectable!</span>
+
+<span class="cm"># In tests:</span>
+config = SeatConfig(time_provider=<span class="kw">lambda</span>: fixed_time)
+                    </div>
+                </div>
+            </div>
+
+            <div class="evolution-item fade-in">
+                <div class="evolution-version">
+                    <div class="version-num">V7</div>
+                    <span class="version-badge refactor">Refactor</span>
+                </div>
+                <div class="evolution-content">
+                    <h3>State Pattern</h3>
+                    <p>Each state is a class. Polymorphic behavior. Easy to extend.</p>
+                    <div class="code-block">
+<span class="kw">class</span> <span class="cls">SeatState</span>(ABC):
+    <span class="kw">def</span> <span class="fn">can_hold</span>(self) -> <span class="kw">bool</span>: ...
+    <span class="kw">def</span> <span class="fn">can_reserve</span>(self) -> <span class="kw">bool</span>: ...
+
+<span class="kw">class</span> <span class="cls">HeldState</span>(SeatState):
+    <span class="kw">def</span> <span class="fn">can_hold</span>(self): <span class="kw">return</span> <span class="kw">False</span>  <span class="cm"># Already held</span>
+    <span class="kw">def</span> <span class="fn">can_reserve</span>(self): <span class="kw">return</span> <span class="kw">True</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Transition Table -->
+    <section id="transitions">
+        <div class="transition-section">
+            <div class="section-header" style="margin-bottom: 0;">
+                <div class="section-tag">State Machine</div>
+                <h2 class="section-title">Transition Rules</h2>
+            </div>
+
+            <table class="transition-table">
+                <thead>
+                    <tr>
+                        <th>From State</th>
+                        <th>hold()</th>
+                        <th>reserve()</th>
+                        <th>cancel()</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="state-badge available">Available</span></td>
+                        <td><span class="check">✓</span> → Held</td>
+                        <td><span class="cross">✗</span> Must hold first</td>
+                        <td><span class="cross">✗</span> Nothing to cancel</td>
+                    </tr>
+                    <tr>
+                        <td><span class="state-badge held">Held</span></td>
+                        <td><span class="cross">✗</span> Already held</td>
+                        <td><span class="check">✓</span> → Reserved</td>
+                        <td><span class="check">✓</span> → Available</td>
+                    </tr>
+                    <tr>
+                        <td><span class="state-badge reserved">Reserved</span></td>
+                        <td><span class="cross">✗</span> Already reserved</td>
+                        <td><span class="cross">✗</span> Already reserved</td>
+                        <td><span class="check">✓</span> → Available</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+        <div class="section-header">
+            <div class="section-tag">Key Concepts</div>
+            <h2 class="section-title">State Machine Benefits</h2>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🔢</div>
+                <h4>Type-Safe States</h4>
+                <p>Enum prevents typos. IDE catches errors before runtime.</p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📋</div>
+                <h4>Declarative Rules</h4>
+                <p>Transition table shows all valid paths at a glance.</p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">⏱️</div>
+                <h4>Auto-Expiration</h4>
+                <p>Holds expire after timeout. State stays consistent.</p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">💉</div>
+                <h4>Injectable Time</h4>
+                <p>Test expiration instantly by injecting mock time provider.</p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🔒</div>
+                <h4>Invalid Transitions Blocked</h4>
+                <p>Can't reserve without holding. Can't hold twice.</p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📦</div>
+                <h4>Polymorphic States</h4>
+                <p>Each state class knows its own behavior. Easy to extend.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section>
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value">4</div>
+                <div class="stat-label">States</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">7</div>
+                <div class="stat-label">Versions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">20</div>
+                <div class="stat-label">Tests</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-states">
+            <span></span><span></span><span></span>
+        </div>
+        <p class="footer-text">
+            State Machine Pattern through TDD<br>
+            Available → Held → Reserved
+        </p>
+    </footer>
+
+    <script>
+        // Intersection Observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Book Tickets - GIC Cinemas{% endblock %}
+
+{% block content %}
+<section class="hero" style="padding-bottom: var(--space-xl);">
+    <h1 class="display-title hero-title animate-fade-up">
+        Book <span class="text-gradient">Tickets</span>
+    </h1>
+    <p class="display-subtitle hero-subtitle">{{ movie.title }}</p>
+</section>
+
+<section class="container-narrow">
+    <!-- Stats -->
+    <div class="stats-grid animate-fade-up delay-1" style="margin-bottom: var(--space-2xl);">
+        <div class="stat-card">
+            <div class="stat-value">{{ available_seats }}</div>
+            <div class="stat-label">Available</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ movie.rows * movie.seats_per_row }}</div>
+            <div class="stat-label">Total Seats</div>
+        </div>
+    </div>
+    
+    <div class="card card-glow animate-fade-up delay-2">
+        {% if error %}
+        <div class="alert alert-error mb-xl">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">
+                {% if error == 'not_enough' %}
+                Sorry, there are only {{ available_seats }} seats available.
+                {% elif error == 'no_seats_selected' or error == 'no_seats' %}
+                No seats were selected. Please try again.
+                {% elif error == 'no_seats_allocated' %}
+                Could not allocate seats. Please try resetting the movie and setting it up again.
+                {% elif error == 'allocation_failed' %}
+                Seat allocation failed. Please try again.
+                {% elif error == 'invalid_seats' %}
+                Invalid seat selection. Please try again.
+                {% elif error == 'seats_taken' %}
+                Some seats were already taken. Please select again.
+                {% else %}
+                {{ error }}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="/book/allocate">
+            <div class="form-group">
+                <label class="form-label" for="num_tickets">Number of Tickets</label>
+                <input 
+                    type="number" 
+                    id="num_tickets" 
+                    name="num_tickets" 
+                    class="form-input form-input-mono"
+                    placeholder="Enter quantity"
+                    min="1"
+                    max="{{ available_seats }}"
+                    required
+                    autofocus
+                >
+                <p class="form-hint">
+                    Enter number of tickets to purchase (1-{{ available_seats }})
+                </p>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg w-full btn-arrow">
+                Find Best Seats <span class="arrow">→</span>
+            </button>
+        </form>
+    </div>
+</section>
+
+<section class="text-center mt-2xl animate-fade-up delay-3">
+    <a href="/" class="btn btn-ghost">← Back to Main Menu</a>
+</section>
+{% endblock %}

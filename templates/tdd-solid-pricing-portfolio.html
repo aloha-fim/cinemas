@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOLID Principles Deep Dive | Ticket Pricing System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #09090b;
+            --bg-subtle: #0f0f11;
+            --bg-card: #141416;
+            --bg-elevated: #1a1a1d;
+            --bg-hover: #212124;
+            
+            --border-dim: rgba(255, 255, 255, 0.04);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-default: rgba(255, 255, 255, 0.12);
+            
+            --text-primary: #fafafa;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.45);
+            --text-muted: rgba(255, 255, 255, 0.25);
+            
+            /* SOLID Colors - Vibrant & Distinct */
+            --s-color: #ec4899;
+            --s-soft: rgba(236, 72, 153, 0.12);
+            --s-glow: rgba(236, 72, 153, 0.25);
+            
+            --o-color: #f97316;
+            --o-soft: rgba(249, 115, 22, 0.12);
+            --o-glow: rgba(249, 115, 22, 0.25);
+            
+            --l-color: #eab308;
+            --l-soft: rgba(234, 179, 8, 0.12);
+            --l-glow: rgba(234, 179, 8, 0.25);
+            
+            --i-color: #22c55e;
+            --i-soft: rgba(34, 197, 94, 0.12);
+            --i-glow: rgba(34, 197, 94, 0.25);
+            
+            --d-color: #3b82f6;
+            --d-soft: rgba(59, 130, 246, 0.12);
+            --d-glow: rgba(59, 130, 246, 0.25);
+            
+            --success: #10b981;
+            --error: #ef4444;
+            
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+            --radius-2xl: 28px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-base);
+            color: var(--text-primary);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Background */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse 60% 40% at 30% 10%, var(--s-glow) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 35% at 70% 20%, var(--o-glow) 0%, transparent 50%),
+                radial-gradient(ellipse 45% 30% at 20% 70%, var(--i-glow) 0%, transparent 50%),
+                radial-gradient(ellipse 55% 35% at 80% 80%, var(--d-glow) 0%, transparent 50%);
+            opacity: 0.4;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0.875rem 2rem;
+            background: rgba(9, 9, 11, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 0.9375rem;
+        }
+
+        .nav-logo-letters {
+            display: flex;
+            gap: 3px;
+        }
+
+        .nav-logo-letters span {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.6875rem;
+        }
+
+        .nav-logo-letters span:nth-child(1) { background: var(--s-soft); color: var(--s-color); }
+        .nav-logo-letters span:nth-child(2) { background: var(--o-soft); color: var(--o-color); }
+        .nav-logo-letters span:nth-child(3) { background: var(--l-soft); color: var(--l-color); }
+        .nav-logo-letters span:nth-child(4) { background: var(--i-soft); color: var(--i-color); }
+        .nav-logo-letters span:nth-child(5) { background: var(--d-soft); color: var(--d-color); }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 7vw, 4.5rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero h1 .solid-letters {
+            display: inline-flex;
+            gap: 0.08em;
+        }
+
+        .hero h1 .solid-letters span {
+            transition: transform 0.3s, text-shadow 0.3s;
+        }
+
+        .hero h1 .solid-letters span:nth-child(1) { color: var(--s-color); }
+        .hero h1 .solid-letters span:nth-child(2) { color: var(--o-color); }
+        .hero h1 .solid-letters span:nth-child(3) { color: var(--l-color); }
+        .hero h1 .solid-letters span:nth-child(4) { color: var(--i-color); }
+        .hero h1 .solid-letters span:nth-child(5) { color: var(--d-color); }
+
+        .hero h1 .solid-letters span:hover {
+            transform: translateY(-4px);
+        }
+
+        .hero-subtitle {
+            font-size: 1.0625rem;
+            color: var(--text-secondary);
+            max-width: 580px;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Principle Overview Bar */
+        .principle-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 3rem;
+            padding: 0 1rem;
+        }
+
+        .principle-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .principle-pill:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-default);
+        }
+
+        .principle-pill .letter {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.875rem;
+        }
+
+        .principle-pill.s .letter { background: var(--s-soft); color: var(--s-color); }
+        .principle-pill.o .letter { background: var(--o-soft); color: var(--o-color); }
+        .principle-pill.l .letter { background: var(--l-soft); color: var(--l-color); }
+        .principle-pill.i .letter { background: var(--i-soft); color: var(--i-color); }
+        .principle-pill.d .letter { background: var(--d-soft); color: var(--d-color); }
+
+        .principle-pill .info {
+            text-align: left;
+        }
+
+        .principle-pill .name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .principle-pill .desc {
+            font-size: 0.625rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 5rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-tag {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.75rem, 4vw, 2.25rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        /* Principle Deep Dive Cards */
+        .principle-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+        }
+
+        .principle-card:hover {
+            border-color: var(--border-default);
+        }
+
+        .principle-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .principle-letter-large {
+            width: 72px;
+            height: 72px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .principle-card.s .principle-letter-large { background: var(--s-soft); color: var(--s-color); }
+        .principle-card.o .principle-letter-large { background: var(--o-soft); color: var(--o-color); }
+        .principle-card.l .principle-letter-large { background: var(--l-soft); color: var(--l-color); }
+        .principle-card.i .principle-letter-large { background: var(--i-soft); color: var(--i-color); }
+        .principle-card.d .principle-letter-large { background: var(--d-soft); color: var(--d-color); }
+
+        .principle-card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
+        }
+
+        .principle-card.s .principle-card-title { color: var(--s-color); }
+        .principle-card.o .principle-card-title { color: var(--o-color); }
+        .principle-card.l .principle-card-title { color: var(--l-color); }
+        .principle-card.i .principle-card-title { color: var(--i-color); }
+        .principle-card.d .principle-card-title { color: var(--d-color); }
+
+        .principle-tagline {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .principle-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 800px) {
+            .principle-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .principle-explanation h4 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .principle-explanation p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 1rem;
+        }
+
+        .principle-signs {
+            background: var(--bg-subtle);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .principle-signs h5 {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--error);
+            margin-bottom: 0.5rem;
+        }
+
+        .principle-signs ul {
+            list-style: none;
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+        }
+
+        .principle-signs li {
+            padding: 0.25rem 0;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .principle-signs li::before {
+            content: "×";
+            position: absolute;
+            left: 0;
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        .code-example {
+            background: var(--bg-base);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg-subtle);
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .code-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .code-label.bad { color: var(--error); }
+        .code-label.good { color: var(--success); }
+
+        .code-body {
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+
+        .code-body .kw { color: #c084fc; }
+        .code-body .fn { color: #60a5fa; }
+        .code-body .str { color: #4ade80; }
+        .code-body .cm { color: var(--text-muted); }
+        .code-body .cls { color: #f472b6; }
+        .code-body .num { color: #fbbf24; }
+
+        /* Stats Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin: 4rem 0;
+        }
+
+        @media (max-width: 700px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .stat-card:nth-child(1) .stat-value { color: var(--s-color); }
+        .stat-card:nth-child(2) .stat-value { color: var(--o-color); }
+        .stat-card:nth-child(3) .stat-value { color: var(--l-color); }
+        .stat-card:nth-child(4) .stat-value { color: var(--i-color); }
+        .stat-card:nth-child(5) .stat-value { color: var(--d-color); }
+
+        .stat-label {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 0.25rem;
+        }
+
+        /* Summary Table */
+        .summary-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            padding: 2.5rem;
+            margin: 4rem 0;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .summary-table th {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            background: var(--bg-subtle);
+        }
+
+        .summary-table th:first-child { border-radius: var(--radius-md) 0 0 0; }
+        .summary-table th:last-child { border-radius: 0 var(--radius-md) 0 0; }
+        .summary-table tr:last-child td { border-bottom: none; }
+
+        .summary-table td {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .summary-table td:first-child {
+            font-weight: 600;
+        }
+
+        .summary-table tr:nth-child(1) td:first-child { color: var(--s-color); }
+        .summary-table tr:nth-child(2) td:first-child { color: var(--o-color); }
+        .summary-table tr:nth-child(3) td:first-child { color: var(--l-color); }
+        .summary-table tr:nth-child(4) td:first-child { color: var(--i-color); }
+        .summary-table tr:nth-child(5) td:first-child { color: var(--d-color); }
+
+        .summary-table code {
+            background: var(--bg-base);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .footer-letters {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .footer-letters span {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+
+        .footer-letters span:nth-child(1) { background: var(--s-soft); color: var(--s-color); }
+        .footer-letters span:nth-child(2) { background: var(--o-soft); color: var(--o-color); }
+        .footer-letters span:nth-child(3) { background: var(--l-soft); color: var(--l-color); }
+        .footer-letters span:nth-child(4) { background: var(--i-soft); color: var(--i-color); }
+        .footer-letters span:nth-child(5) { background: var(--d-soft); color: var(--d-color); }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-gradient"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-logo">
+                <div class="nav-logo-letters">
+                    <span>S</span><span>O</span><span>L</span><span>I</span><span>D</span>
+                </div>
+                <span>Deep Dive</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#principles">Principles</a></li>
+                <li><a href="#summary">Summary</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">🎓 Complete Learning Guide</div>
+        <h1>
+            <span class="solid-letters">
+                <span>S</span><span>O</span><span>L</span><span>I</span><span>D</span>
+            </span>
+            <br>Principles Explained
+        </h1>
+        <p class="hero-subtitle">
+            Master the five principles of object-oriented design through 
+            a real-world ticket pricing system. Each principle explained 
+            with problems, solutions, and code examples.
+        </p>
+
+        <div class="principle-bar">
+            <a href="#s" class="principle-pill s">
+                <div class="letter">S</div>
+                <div class="info">
+                    <div class="name">Single Responsibility</div>
+                    <div class="desc">One class, one job</div>
+                </div>
+            </a>
+            <a href="#o" class="principle-pill o">
+                <div class="letter">O</div>
+                <div class="info">
+                    <div class="name">Open/Closed</div>
+                    <div class="desc">Extend, don't modify</div>
+                </div>
+            </a>
+            <a href="#l" class="principle-pill l">
+                <div class="letter">L</div>
+                <div class="info">
+                    <div class="name">Liskov Substitution</div>
+                    <div class="desc">Subtypes are swappable</div>
+                </div>
+            </a>
+            <a href="#i" class="principle-pill i">
+                <div class="letter">I</div>
+                <div class="info">
+                    <div class="name">Interface Segregation</div>
+                    <div class="desc">Small, focused interfaces</div>
+                </div>
+            </a>
+            <a href="#d" class="principle-pill d">
+                <div class="letter">D</div>
+                <div class="info">
+                    <div class="name">Dependency Inversion</div>
+                    <div class="desc">Depend on abstractions</div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- Principles Section -->
+    <section id="principles">
+        <!-- S - Single Responsibility -->
+        <div id="s" class="principle-card s fade-in">
+            <div class="principle-card-header">
+                <div class="principle-letter-large">S</div>
+                <div>
+                    <h3 class="principle-card-title">Single Responsibility</h3>
+                    <p class="principle-tagline">"A class should have only ONE reason to change"</p>
+                </div>
+            </div>
+            <div class="principle-content">
+                <div class="principle-explanation">
+                    <h4>The Problem</h4>
+                    <p>When a class does multiple jobs, any change to one job risks breaking the others. A "God Class" that handles pricing, discounts, fees, and tax is a nightmare to maintain.</p>
+                    <h4>The Solution</h4>
+                    <p>Split responsibilities into separate classes. <code>BasePriceCalculator</code> only handles base prices. <code>TaxCalculator</code> only handles tax. If tax logic changes, only one class changes.</p>
+                    <div class="principle-signs">
+                        <h5>Signs of Violation</h5>
+                        <ul>
+                            <li>Class has multiple unrelated methods</li>
+                            <li>Changes to one feature break another</li>
+                            <li>Class name includes "Manager" or "Handler"</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-example">
+                    <div class="code-header">
+                        <span class="code-label good">✓ SRP Applied</span>
+                    </div>
+                    <div class="code-body">
+<span class="cm"># Each class = ONE job</span>
+
+<span class="kw">class</span> <span class="cls">BasePriceCalculator</span>:
+    <span class="cm"># ONLY handles base prices</span>
+    <span class="kw">def</span> <span class="fn">get_price</span>(self, type): ...
+
+<span class="kw">class</span> <span class="cls">DiscountCalculator</span>:
+    <span class="cm"># ONLY handles discounts</span>
+    <span class="kw">def</span> <span class="fn">apply</span>(self, price, type): ...
+
+<span class="kw">class</span> <span class="cls">TaxCalculator</span>:
+    <span class="cm"># ONLY handles tax</span>
+    <span class="kw">def</span> <span class="fn">apply</span>(self, price): ...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- O - Open/Closed -->
+        <div id="o" class="principle-card o fade-in">
+            <div class="principle-card-header">
+                <div class="principle-letter-large">O</div>
+                <div>
+                    <h3 class="principle-card-title">Open/Closed</h3>
+                    <p class="principle-tagline">"Open for extension, closed for modification"</p>
+                </div>
+            </div>
+            <div class="principle-content">
+                <div class="principle-explanation">
+                    <h4>The Problem</h4>
+                    <p>Every time you need a new discount type, you modify the same switch/if-else block. This risks breaking existing discounts and requires re-testing everything.</p>
+                    <h4>The Solution</h4>
+                    <p>Define a <code>Discount</code> interface. New discounts are new classes that implement this interface. The pricing engine works with ANY discount without modification.</p>
+                    <div class="principle-signs">
+                        <h5>Signs of Violation</h5>
+                        <ul>
+                            <li>if/elif chains that grow with each new type</li>
+                            <li>Switch statements on type codes</li>
+                            <li>Adding features requires changing tested code</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-example">
+                    <div class="code-header">
+                        <span class="code-label good">✓ OCP Applied</span>
+                    </div>
+                    <div class="code-body">
+<span class="cm"># Define interface once</span>
+<span class="kw">class</span> <span class="cls">Discount</span>(ABC):
+    <span class="kw">def</span> <span class="fn">apply</span>(self, price): ...
+
+<span class="cm"># Add new discounts as NEW classes</span>
+<span class="kw">class</span> <span class="cls">StudentDiscount</span>(Discount): ...
+<span class="kw">class</span> <span class="cls">MilitaryDiscount</span>(Discount): ...
+
+<span class="cm"># Engine never changes!</span>
+<span class="kw">class</span> <span class="cls">PricingEngine</span>:
+    <span class="kw">def</span> <span class="fn">add_discount</span>(self, d: Discount):
+        self.discounts.append(d)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- L - Liskov Substitution -->
+        <div id="l" class="principle-card l fade-in">
+            <div class="principle-card-header">
+                <div class="principle-letter-large">L</div>
+                <div>
+                    <h3 class="principle-card-title">Liskov Substitution</h3>
+                    <p class="principle-tagline">"Subtypes must be substitutable for base types"</p>
+                </div>
+            </div>
+            <div class="principle-content">
+                <div class="principle-explanation">
+                    <h4>The Problem</h4>
+                    <p>If a subclass behaves differently than expected (throws exceptions, returns wrong types), code that works with the base class will break when given the subclass.</p>
+                    <h4>The Solution</h4>
+                    <p>All <code>Discount</code> subclasses follow the same contract: <code>apply()</code> returns a float ≤ input price. Any discount can replace any other without surprises.</p>
+                    <div class="principle-signs">
+                        <h5>Signs of Violation</h5>
+                        <ul>
+                            <li>Subclass throws exception for inherited method</li>
+                            <li>Code checks <code>if isinstance(x, SpecificClass)</code></li>
+                            <li>Subclass returns unexpected types</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-example">
+                    <div class="code-header">
+                        <span class="code-label good">✓ LSP Applied</span>
+                    </div>
+                    <div class="code-body">
+<span class="cm"># All discounts follow the CONTRACT</span>
+
+<span class="kw">def</span> <span class="fn">apply_discount</span>(d: Discount, price):
+    <span class="cm"># Works with ANY Discount!</span>
+    <span class="kw">return</span> d.apply(price)
+
+<span class="cm"># These are interchangeable:</span>
+apply_discount(StudentDiscount(), <span class="num">100</span>)
+apply_discount(MilitaryDiscount(), <span class="num">100</span>)
+apply_discount(MemberDiscount(), <span class="num">100</span>)
+apply_discount(PromoDiscount(), <span class="num">100</span>)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- I - Interface Segregation -->
+        <div id="i" class="principle-card i fade-in">
+            <div class="principle-card-header">
+                <div class="principle-letter-large">I</div>
+                <div>
+                    <h3 class="principle-card-title">Interface Segregation</h3>
+                    <p class="principle-tagline">"Clients shouldn't depend on methods they don't use"</p>
+                </div>
+            </div>
+            <div class="principle-content">
+                <div class="principle-explanation">
+                    <h4>The Problem</h4>
+                    <p>A "fat" interface forces classes to implement methods they don't need. If <code>Discount</code> requires <code>is_expired()</code>, permanent discounts have to implement a meaningless method.</p>
+                    <h4>The Solution</h4>
+                    <p>Create focused interfaces: <code>Applicable</code> (all discounts), <code>Stackable</code> (some discounts), <code>Expirable</code> (promo codes only). Each class implements only what it needs.</p>
+                    <div class="principle-signs">
+                        <h5>Signs of Violation</h5>
+                        <ul>
+                            <li>Methods that throw "NotImplemented"</li>
+                            <li>Empty method implementations</li>
+                            <li>Classes with methods they don't actually use</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-example">
+                    <div class="code-header">
+                        <span class="code-label good">✓ ISP Applied</span>
+                    </div>
+                    <div class="code-body">
+<span class="cm"># Focused interfaces</span>
+<span class="kw">class</span> <span class="cls">Applicable</span>(Protocol):
+    <span class="kw">def</span> <span class="fn">apply</span>(self, price): ...
+
+<span class="kw">class</span> <span class="cls">Stackable</span>(Protocol):
+    <span class="kw">def</span> <span class="fn">can_stack_with</span>(self, other): ...
+
+<span class="kw">class</span> <span class="cls">Expirable</span>(Protocol):
+    <span class="kw">def</span> <span class="fn">is_expired</span>(self): ...
+
+<span class="cm"># Each class implements ONLY what it needs</span>
+<span class="kw">class</span> <span class="cls">PercentageDiscount</span>:  <span class="cm"># Applicable ✓ Stackable ✓</span>
+<span class="kw">class</span> <span class="cls">FixedDiscount</span>:       <span class="cm"># Applicable ✓ only</span>
+<span class="kw">class</span> <span class="cls">PromoCode</span>:           <span class="cm"># Applicable ✓ Expirable ✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- D - Dependency Inversion -->
+        <div id="d" class="principle-card d fade-in">
+            <div class="principle-card-header">
+                <div class="principle-letter-large">D</div>
+                <div>
+                    <h3 class="principle-card-title">Dependency Inversion</h3>
+                    <p class="principle-tagline">"Depend on abstractions, not concretions"</p>
+                </div>
+            </div>
+            <div class="principle-content">
+                <div class="principle-explanation">
+                    <h4>The Problem</h4>
+                    <p>When a class creates its own dependencies internally, you can't test it in isolation or swap implementations. Testing requires the real database, real API, etc.</p>
+                    <h4>The Solution</h4>
+                    <p>Inject dependencies via constructor. <code>TicketPricingService</code> accepts <code>PriceProvider</code>, <code>TaxProvider</code>, etc. In tests, inject mocks. In production, inject real implementations.</p>
+                    <div class="principle-signs">
+                        <h5>Signs of Violation</h5>
+                        <ul>
+                            <li><code>new</code> keyword inside methods</li>
+                            <li>Can't test without real database/API</li>
+                            <li>Hard to swap implementations</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="code-example">
+                    <div class="code-header">
+                        <span class="code-label good">✓ DIP Applied</span>
+                    </div>
+                    <div class="code-body">
+<span class="cm"># Depend on ABSTRACTIONS</span>
+<span class="kw">class</span> <span class="cls">TicketPricingService</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        price_provider: PriceProvider,
+        tax_provider: TaxProvider,
+    ):
+        self.prices = price_provider
+        self.tax = tax_provider
+
+<span class="cm"># In tests: inject mocks!</span>
+service = TicketPricingService(
+    price_provider=MockPriceProvider(),
+    tax_provider=MockTaxProvider(),
+)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section>
+        <div class="stats-grid">
+            <div class="stat-card fade-in">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Principles</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Iterations</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">16</div>
+                <div class="stat-label">Tests</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Interfaces</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary Table -->
+    <section id="summary">
+        <div class="summary-section fade-in">
+            <div class="section-header" style="margin-bottom: 2rem;">
+                <div class="section-tag">Quick Reference</div>
+                <h2 class="section-title">SOLID at a Glance</h2>
+            </div>
+
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Principle</th>
+                        <th>Problem</th>
+                        <th>Solution</th>
+                        <th>Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>S - Single Responsibility</td>
+                        <td>Class does too many things</td>
+                        <td>One class = one job</td>
+                        <td><code>TaxCalculator</code></td>
+                    </tr>
+                    <tr>
+                        <td>O - Open/Closed</td>
+                        <td>Must modify to add features</td>
+                        <td>Add new classes instead</td>
+                        <td><code>class NewDiscount(Discount)</code></td>
+                    </tr>
+                    <tr>
+                        <td>L - Liskov Substitution</td>
+                        <td>Subclasses break contracts</td>
+                        <td>All subtypes interchangeable</td>
+                        <td><code>apply()</code> always returns float</td>
+                    </tr>
+                    <tr>
+                        <td>I - Interface Segregation</td>
+                        <td>Fat interfaces force unused methods</td>
+                        <td>Small, focused interfaces</td>
+                        <td><code>Applicable</code>, <code>Stackable</code></td>
+                    </tr>
+                    <tr>
+                        <td>D - Dependency Inversion</td>
+                        <td>Can't test, hardcoded deps</td>
+                        <td>Inject abstractions</td>
+                        <td><code>__init__(provider: Provider)</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-letters">
+            <span>S</span><span>O</span><span>L</span><span>I</span><span>D</span>
+        </div>
+        <p class="footer-text">
+            Five principles. Clean architecture.<br>
+            Maintainable, testable, extensible code.
+        </p>
+    </footer>
+
+    <script>
+        // Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '-50px' });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_confirmation %}Booking Confirmed{% else %}Booking Details{% endif %} - GIC Cinemas{% endblock %}
+
+{% block content %}
+<section class="container-medium">
+    {% if is_confirmation %}
+    <!-- Confirmation Success -->
+    <div class="confirmation-card card card-glow animate-fade-up">
+        <div class="confirmation-icon">✓</div>
+        
+        <h1 class="display-title mb-md">
+            <span class="text-gradient">Booking Confirmed!</span>
+        </h1>
+        <p class="display-subtitle mb-xl">Your seats have been reserved</p>
+        
+        <!-- Booking ID -->
+        <div class="text-label mb-sm">Booking ID</div>
+        <div class="booking-id">{{ booking.booking_id }}</div>
+        
+        <!-- Details Grid -->
+        <div class="booking-details">
+            <div class="booking-detail">
+                <div class="booking-detail-label">Movie</div>
+                <div class="booking-detail-value">{{ movie.title }}</div>
+            </div>
+            <div class="booking-detail">
+                <div class="booking-detail-label">Tickets</div>
+                <div class="booking-detail-value">{{ seats|length }}</div>
+            </div>
+            <div class="booking-detail">
+                <div class="booking-detail-label">Status</div>
+                <div class="booking-detail-value"><span class="badge badge-success">Confirmed</span></div>
+            </div>
+        </div>
+        
+        <!-- Seats -->
+        <div class="mt-xl">
+            <div class="text-label mb-md">Your Seats</div>
+            <div class="seats-chips">
+                {% for seat in seats %}
+                <span class="seat-chip">{{ seat.row_letter }}{{ seat.seat_number }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- View Booking Details -->
+    <div class="card card-glow animate-fade-up">
+        <div class="text-center mb-xl">
+            <h1 class="display-title mb-md">Booking Details</h1>
+            
+            <div class="text-label mb-sm">Booking ID</div>
+            <div class="booking-id">{{ booking.booking_id }}</div>
+        </div>
+        
+        <!-- Details Grid -->
+        <div class="booking-details">
+            <div class="booking-detail">
+                <div class="booking-detail-label">Movie</div>
+                <div class="booking-detail-value">{{ movie.title }}</div>
+            </div>
+            <div class="booking-detail">
+                <div class="booking-detail-label">Tickets</div>
+                <div class="booking-detail-value">{{ seats|length }}</div>
+            </div>
+            <div class="booking-detail">
+                <div class="booking-detail-label">Status</div>
+                <div class="booking-detail-value"><span class="badge badge-success">Confirmed</span></div>
+            </div>
+        </div>
+        
+        <!-- Seats -->
+        <div class="mt-xl text-center">
+            <div class="text-label mb-md">Seat Assignment</div>
+            <div class="seats-chips">
+                {% for seat in seats %}
+                <span class="seat-chip">{{ seat.row_letter }}{{ seat.seat_number }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+{% if show_map and seating_map %}
+<!-- Seating Map -->
+<section class="container-medium mt-2xl animate-fade-up delay-2">
+    <div class="seating-container">
+        <div class="screen"></div>
+        
+        <div class="seating-grid">
+            {% for row in seating_map.rows|reverse %}
+            <div class="seat-row">
+                <span class="row-label">{{ row.letter }}</span>
+                {% for seat in row.seats %}
+                <div class="seat {% if seat.marker == 'o' %}seat-viewing{% elif seat.marker == '#' %}seat-booked{% else %}seat-available{% endif %}">
+                    {{ seat.marker }}
+                </div>
+                {% endfor %}
+                <span class="row-label">{{ row.letter }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Seat Numbers -->
+        <div class="seat-numbers">
+            {% for i in range(1, seating_map.seats_per_row + 1) %}
+            <span class="seat-number">{{ i }}</span>
+            {% endfor %}
+        </div>
+        
+        <!-- Legend -->
+        <div class="seating-legend">
+            <div class="legend-item">
+                <span class="legend-dot legend-dot-available"></span>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot legend-dot-viewing"></span>
+                <span>Your Booking</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot legend-dot-booked"></span>
+                <span>Other Bookings</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="text-center mt-2xl animate-fade-up delay-3">
+    <div class="flex justify-center gap-md flex-wrap">
+        <a href="/book" class="btn btn-secondary">Book More Tickets</a>
+        <a href="/" class="btn btn-ghost">Back to Main Menu</a>
+    </div>
+</section>
+{% endblock %}

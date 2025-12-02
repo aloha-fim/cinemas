@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOLID Principles Through TDD | Notification System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #000000;
+            --bg-base: #0a0a0a;
+            --bg-subtle: #111111;
+            --bg-surface: #171717;
+            --bg-elevated: #1f1f1f;
+            
+            --border-dim: rgba(255, 255, 255, 0.04);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-default: rgba(255, 255, 255, 0.12);
+            
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.45);
+            --text-muted: rgba(255, 255, 255, 0.25);
+            
+            /* SOLID Colors */
+            --s-color: #f472b6;
+            --s-soft: rgba(244, 114, 182, 0.12);
+            --o-color: #fb923c;
+            --o-soft: rgba(251, 146, 60, 0.12);
+            --l-color: #facc15;
+            --l-soft: rgba(250, 204, 21, 0.12);
+            --i-color: #4ade80;
+            --i-soft: rgba(74, 222, 128, 0.12);
+            --d-color: #60a5fa;
+            --d-soft: rgba(96, 165, 250, 0.12);
+            
+            /* Status */
+            --success: #22c55e;
+            --success-soft: rgba(34, 197, 94, 0.12);
+            --error: #ef4444;
+            --error-soft: rgba(239, 68, 68, 0.12);
+            
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+            --radius-2xl: 28px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-void);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Background Effects */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(244, 114, 182, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 50%, rgba(96, 165, 250, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 30% at 20% 80%, rgba(74, 222, 128, 0.06) 0%, transparent 50%);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-logo-icon {
+            display: flex;
+            gap: 2px;
+        }
+
+        .nav-logo-icon span {
+            width: 6px;
+            height: 18px;
+            border-radius: 2px;
+        }
+
+        .nav-logo-icon span:nth-child(1) { background: var(--s-color); }
+        .nav-logo-icon span:nth-child(2) { background: var(--o-color); }
+        .nav-logo-icon span:nth-child(3) { background: var(--l-color); }
+        .nav-logo-icon span:nth-child(4) { background: var(--i-color); }
+        .nav-logo-icon span:nth-child(5) { background: var(--d-color); }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.875rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 7vw, 5rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 .solid-word {
+            display: inline-flex;
+            gap: 0.05em;
+        }
+
+        .hero h1 .solid-word span {
+            display: inline-block;
+            transition: transform 0.3s, color 0.3s;
+        }
+
+        .hero h1 .solid-word span:nth-child(1) { color: var(--s-color); }
+        .hero h1 .solid-word span:nth-child(2) { color: var(--o-color); }
+        .hero h1 .solid-word span:nth-child(3) { color: var(--l-color); }
+        .hero h1 .solid-word span:nth-child(4) { color: var(--i-color); }
+        .hero h1 .solid-word span:nth-child(5) { color: var(--d-color); }
+
+        .hero h1 .solid-word span:hover {
+            transform: translateY(-4px) scale(1.1);
+        }
+
+        .hero-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-void);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-default);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-surface);
+        }
+
+        /* SOLID Acronym Bar */
+        .solid-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 4rem;
+            flex-wrap: wrap;
+            padding: 0 1rem;
+        }
+
+        .solid-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-lg);
+            transition: all 0.3s;
+        }
+
+        .solid-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-subtle);
+        }
+
+        .solid-item .letter {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.875rem;
+        }
+
+        .solid-item.s .letter { background: var(--s-soft); color: var(--s-color); }
+        .solid-item.o .letter { background: var(--o-soft); color: var(--o-color); }
+        .solid-item.l .letter { background: var(--l-soft); color: var(--l-color); }
+        .solid-item.i .letter { background: var(--i-soft); color: var(--i-color); }
+        .solid-item.d .letter { background: var(--d-soft); color: var(--d-color); }
+
+        .solid-item .name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-tag {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        /* Principle Cards */
+        .principles-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .principle-card {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 2rem;
+            align-items: start;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .principle-card:hover {
+            border-color: var(--border-subtle);
+            background: var(--bg-surface);
+        }
+
+        @media (max-width: 900px) {
+            .principle-card {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        .principle-letter {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.75rem;
+        }
+
+        .principle-card.s .principle-letter { background: var(--s-soft); color: var(--s-color); }
+        .principle-card.o .principle-letter { background: var(--o-soft); color: var(--o-color); }
+        .principle-card.l .principle-letter { background: var(--l-soft); color: var(--l-color); }
+        .principle-card.i .principle-letter { background: var(--i-soft); color: var(--i-color); }
+        .principle-card.d .principle-letter { background: var(--d-soft); color: var(--d-color); }
+
+        .principle-content h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .principle-content .tagline {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .principle-content p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 1rem;
+        }
+
+        .principle-code {
+            background: var(--bg-void);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            max-width: 320px;
+        }
+
+        .principle-code .kw { color: #c084fc; }
+        .principle-code .fn { color: #60a5fa; }
+        .principle-code .str { color: #4ade80; }
+        .principle-code .cm { color: var(--text-muted); }
+        .principle-code .cls { color: #f472b6; }
+        .principle-code .dec { color: #facc15; }
+
+        /* Before/After */
+        .compare-section {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-2xl);
+            padding: 3rem;
+            margin: 4rem 0;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 800px) {
+            .compare-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .compare-panel {
+            background: var(--bg-void);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .compare-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.875rem 1rem;
+            background: var(--bg-subtle);
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .compare-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .compare-title .status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .compare-panel.before .status { background: var(--error); }
+        .compare-panel.after .status { background: var(--success); }
+
+        .compare-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .compare-panel.before .compare-badge { background: var(--error-soft); color: var(--error); }
+        .compare-panel.after .compare-badge { background: var(--success-soft); color: var(--success); }
+
+        .compare-body {
+            padding: 1rem;
+        }
+
+        .compare-body pre {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-2xl);
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .arch-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .arch-layer {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .arch-box {
+            padding: 1rem 1.5rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .arch-box:hover {
+            transform: translateY(-3px);
+        }
+
+        .arch-box.abstract {
+            border-style: dashed;
+            color: var(--text-secondary);
+        }
+
+        .arch-box.service { border-color: var(--d-color); color: var(--d-color); }
+        .arch-box.email { border-color: var(--s-color); color: var(--s-color); }
+        .arch-box.sms { border-color: var(--o-color); color: var(--o-color); }
+        .arch-box.push { border-color: var(--l-color); color: var(--l-color); }
+        .arch-box.bulk { border-color: var(--i-color); color: var(--i-color); }
+        .arch-box.schedule { border-color: var(--i-color); color: var(--i-color); }
+
+        .arch-arrow {
+            color: var(--text-muted);
+            font-size: 1.5rem;
+        }
+
+        .arch-label {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.5rem;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin: 4rem 0;
+        }
+
+        @media (max-width: 700px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .stat-card:nth-child(1) .stat-value { color: var(--s-color); }
+        .stat-card:nth-child(2) .stat-value { color: var(--o-color); }
+        .stat-card:nth-child(3) .stat-value { color: var(--l-color); }
+        .stat-card:nth-child(4) .stat-value { color: var(--i-color); }
+        .stat-card:nth-child(5) .stat-value { color: var(--d-color); }
+
+        .stat-label {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 0.25rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .footer-solid {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .footer-solid span {
+            width: 8px;
+            height: 24px;
+            border-radius: 2px;
+        }
+
+        .footer-solid span:nth-child(1) { background: var(--s-color); }
+        .footer-solid span:nth-child(2) { background: var(--o-color); }
+        .footer-solid span:nth-child(3) { background: var(--l-color); }
+        .footer-solid span:nth-child(4) { background: var(--i-color); }
+        .footer-solid span:nth-child(5) { background: var(--d-color); }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-gradient"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-logo">
+                <div class="nav-logo-icon">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span>SOLID TDD</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#principles">Principles</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#compare">Before/After</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            TDD + Design Patterns
+        </div>
+        <h1>
+            <span class="solid-word">
+                <span>S</span><span>O</span><span>L</span><span>I</span><span>D</span>
+            </span>
+            <br>Through Testing
+        </h1>
+        <p class="hero-subtitle">
+            Watch a monolithic notification system transform into clean, 
+            maintainable architecture through test-driven refactoring.
+        </p>
+        <div class="hero-actions">
+            <a href="#principles" class="btn btn-primary">Explore Principles →</a>
+            <a href="#compare" class="btn btn-ghost">See Transformation</a>
+        </div>
+
+        <div class="solid-bar">
+            <div class="solid-item s">
+                <div class="letter">S</div>
+                <div class="name">Single Responsibility</div>
+            </div>
+            <div class="solid-item o">
+                <div class="letter">O</div>
+                <div class="name">Open/Closed</div>
+            </div>
+            <div class="solid-item l">
+                <div class="letter">L</div>
+                <div class="name">Liskov Substitution</div>
+            </div>
+            <div class="solid-item i">
+                <div class="letter">I</div>
+                <div class="name">Interface Segregation</div>
+            </div>
+            <div class="solid-item d">
+                <div class="letter">D</div>
+                <div class="name">Dependency Inversion</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Principles Section -->
+    <section id="principles">
+        <div class="section-header">
+            <div class="section-tag">The Five Principles</div>
+            <h2 class="section-title">SOLID in Practice</h2>
+        </div>
+
+        <div class="principles-grid">
+            <!-- S -->
+            <div class="principle-card s fade-in">
+                <div class="principle-letter">S</div>
+                <div class="principle-content">
+                    <h3>Single Responsibility</h3>
+                    <p class="tagline">"A class should have only one reason to change"</p>
+                    <p>Each notification channel is its own class. EmailSender only changes when email logic changes. SMS changes don't affect it.</p>
+                </div>
+                <div class="principle-code">
+<span class="cm"># Each sender = one job</span>
+<span class="kw">class</span> <span class="cls">EmailSender</span>:
+    <span class="kw">def</span> <span class="fn">send</span>(self, to, msg):
+        <span class="cm"># Only email logic</span>
+
+<span class="kw">class</span> <span class="cls">SmsSender</span>:
+    <span class="kw">def</span> <span class="fn">send</span>(self, to, msg):
+        <span class="cm"># Only SMS logic</span>
+                </div>
+            </div>
+
+            <!-- O -->
+            <div class="principle-card o fade-in">
+                <div class="principle-letter">O</div>
+                <div class="principle-content">
+                    <h3>Open/Closed</h3>
+                    <p class="tagline">"Open for extension, closed for modification"</p>
+                    <p>Add new channels like Slack without modifying NotificationService. Just register a new sender!</p>
+                </div>
+                <div class="principle-code">
+<span class="cm"># Add Slack without touching service</span>
+service.register_channel(
+    SlackSender()
+)
+
+<span class="cm"># NotificationService unchanged!</span>
+service.send(<span class="str">"slack"</span>, <span class="str">"#general"</span>, <span class="str">"Hi"</span>)
+                </div>
+            </div>
+
+            <!-- L -->
+            <div class="principle-card l fade-in">
+                <div class="principle-letter">L</div>
+                <div class="principle-content">
+                    <h3>Liskov Substitution</h3>
+                    <p class="tagline">"Subtypes must be substitutable for base types"</p>
+                    <p>Any NotificationSender can replace any other. The service doesn't care which sender it's using.</p>
+                </div>
+                <div class="principle-code">
+<span class="cm"># All senders are interchangeable</span>
+<span class="kw">def</span> <span class="fn">notify</span>(sender: NotificationSender):
+    sender.send(to, msg)
+
+<span class="cm"># Works with ANY sender</span>
+notify(EmailSender())
+notify(SmsSender())
+notify(PushSender())
+                </div>
+            </div>
+
+            <!-- I -->
+            <div class="principle-card i fade-in">
+                <div class="principle-letter">I</div>
+                <div class="principle-content">
+                    <h3>Interface Segregation</h3>
+                    <p class="tagline">"Clients shouldn't depend on methods they don't use"</p>
+                    <p>Separate protocols for BulkSender and SchedulableSender. SmsSender doesn't implement bulk (too expensive).</p>
+                </div>
+                <div class="principle-code">
+<span class="cm"># Focused interfaces</span>
+<span class="kw">class</span> <span class="cls">BulkSender</span>(Protocol):
+    <span class="kw">def</span> <span class="fn">send_bulk</span>(self, ...): ...
+
+<span class="kw">class</span> <span class="cls">SchedulableSender</span>(Protocol):
+    <span class="kw">def</span> <span class="fn">schedule</span>(self, ...): ...
+
+<span class="cm"># EmailSender: BulkSender ✓</span>
+<span class="cm"># PushSender: Schedulable ✓</span>
+                </div>
+            </div>
+
+            <!-- D -->
+            <div class="principle-card d fade-in">
+                <div class="principle-letter">D</div>
+                <div class="principle-content">
+                    <h3>Dependency Inversion</h3>
+                    <p class="tagline">"Depend on abstractions, not concretions"</p>
+                    <p>NotificationService accepts any sender via constructor injection. Easy to test with mocks!</p>
+                </div>
+                <div class="principle-code">
+<span class="cm"># Inject dependencies</span>
+<span class="kw">class</span> <span class="cls">NotificationService</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, senders):
+        <span class="cm"># Accepts ANY senders</span>
+
+<span class="cm"># Easy testing!</span>
+service = NotificationService(
+    senders=[MockSender()]
+)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture">
+        <div class="architecture">
+            <div class="section-tag">System Design</div>
+            <h2 class="section-title">Final Architecture</h2>
+            
+            <div class="arch-diagram">
+                <div class="arch-layer">
+                    <div class="arch-box service">NotificationService</div>
+                </div>
+                <div class="arch-arrow">↓ depends on abstraction ↓</div>
+                <div class="arch-layer">
+                    <div class="arch-box abstract">«abstract» NotificationSender</div>
+                </div>
+                <div class="arch-arrow">↓ implemented by ↓</div>
+                <div class="arch-layer">
+                    <div class="arch-box email">EmailSender</div>
+                    <div class="arch-box sms">SmsSender</div>
+                    <div class="arch-box push">PushSender</div>
+                </div>
+                <p class="arch-label">Concrete Implementations</p>
+                
+                <div style="margin-top: 2rem;"></div>
+                <div class="arch-arrow">↓ optional capabilities ↓</div>
+                <div class="arch-layer">
+                    <div class="arch-box bulk">«protocol» BulkSender</div>
+                    <div class="arch-box schedule">«protocol» SchedulableSender</div>
+                </div>
+                <p class="arch-label">ISP: Focused Interfaces</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Before/After -->
+    <section id="compare">
+        <div class="compare-section">
+            <div class="section-header" style="margin-bottom: 2rem;">
+                <div class="section-tag">Transformation</div>
+                <h2 class="section-title">Before & After SOLID</h2>
+            </div>
+
+            <div class="compare-grid">
+                <div class="compare-panel before">
+                    <div class="compare-header">
+                        <div class="compare-title">
+                            <span class="status"></span>
+                            Monolith
+                        </div>
+                        <span class="compare-badge">Before</span>
+                    </div>
+                    <div class="compare-body">
+<pre><span class="cm"># ❌ Violates ALL SOLID principles</span>
+
+<span class="kw">class</span> <span class="cls">NotificationService</span>:
+    <span class="kw">def</span> <span class="fn">send</span>(self, channel, to, msg):
+        <span class="kw">if</span> channel == <span class="str">"email"</span>:
+            <span class="cm"># Email logic here</span>
+            <span class="kw">pass</span>
+        <span class="kw">elif</span> channel == <span class="str">"sms"</span>:
+            <span class="cm"># SMS logic here</span>
+            <span class="kw">pass</span>
+        <span class="kw">elif</span> channel == <span class="str">"push"</span>:
+            <span class="cm"># Push logic here</span>
+            <span class="kw">pass</span>
+        <span class="cm"># Adding Slack? Modify this!</span></pre>
+                    </div>
+                </div>
+
+                <div class="compare-panel after">
+                    <div class="compare-header">
+                        <div class="compare-title">
+                            <span class="status"></span>
+                            SOLID
+                        </div>
+                        <span class="compare-badge">After</span>
+                    </div>
+                    <div class="compare-body">
+<pre><span class="cm"># ✅ All SOLID principles applied</span>
+
+<span class="kw">class</span> <span class="cls">NotificationService</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, senders):
+        <span class="cm"># DIP: Inject dependencies</span>
+        self._channels = {}
+        <span class="kw">for</span> s <span class="kw">in</span> senders:
+            self.register_channel(s)
+    
+    <span class="kw">def</span> <span class="fn">register_channel</span>(self, sender):
+        <span class="cm"># OCP: Extension point</span>
+        self._channels[sender.channel_name] = sender
+    
+    <span class="kw">def</span> <span class="fn">send</span>(self, channel, to, msg):
+        <span class="cm"># LSP: Any sender works</span>
+        <span class="kw">return</span> self._channels[channel].send(to, msg)</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section>
+        <div class="stats-row">
+            <div class="stat-card fade-in">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Principles</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Versions</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">18</div>
+                <div class="stat-label">Tests</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Protocols</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-solid">
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="footer-text">
+            SOLID principles through TDD<br>
+            From monolith to clean architecture
+        </p>
+    </footer>
+
+    <script>
+        // Intersection Observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '-50px' });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
