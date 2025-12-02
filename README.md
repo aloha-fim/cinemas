@@ -78,6 +78,9 @@ DATABASE_URL=postgresql://username:password@localhost:5432/cinema_booking
 ### 4. Install Dependencies
 
 ```bash
+python -m venv venv (windows virtual env)
+venv/Scripts/activate (windows command)
+
 pip install -r requirements.txt
 ```
 
