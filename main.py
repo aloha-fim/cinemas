@@ -43,7 +43,7 @@ def generate_booking_id(db: Session) -> str:
 def create_seats_for_movie(db: Session, movie: Movie):
     """Create all seats for a movie based on rows and seats_per_row"""
     row_letters = string.ascii_uppercase[:movie.rows]
-    
+
     for row_letter in row_letters:
         for seat_num in range(1, movie.seats_per_row + 1):
             seat = Seat(
@@ -67,14 +67,14 @@ def get_active_movie(db: Session) -> Optional[Movie]:
 async def home(request: Request, db: Session = Depends(get_db)):
     """Home page - setup or main menu"""
     movie = get_active_movie(db)
-    
+
     if movie:
         # Show main menu
         available_seats = db.query(Seat).filter(
             Seat.movie_id == movie.id,
             Seat.is_booked == False
         ).count()
-        
+
         return templates.TemplateResponse("main_menu.html", {
             "request": request,
             "movie": movie,
@@ -99,16 +99,16 @@ async def setup_movie(
     """Setup a new movie with seating configuration"""
     # Validation
     errors = []
-    
+
     if not title or not title.strip():
         errors.append("Movie title is required")
-    
+
     if rows < 1 or rows > 26:
         errors.append("Number of rows must be between 1 and 26")
-    
+
     if seats_per_row < 1 or seats_per_row > 50:
         errors.append("Seats per row must be between 1 and 50")
-    
+
     if errors:
         return templates.TemplateResponse("setup.html", {
             "request": request,
@@ -117,10 +117,10 @@ async def setup_movie(
             "rows": rows,
             "seats_per_row": seats_per_row
         })
-    
+
     # Deactivate any existing active movie
     db.query(Movie).filter(Movie.is_active == True).update({"is_active": False})
-    
+
     # Create new movie
     movie = Movie(
         title=title.strip(),
@@ -131,10 +131,10 @@ async def setup_movie(
     db.add(movie)
     db.commit()
     db.refresh(movie)
-    
+
     # Create seats
     create_seats_for_movie(db, movie)
-    
+
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -142,17 +142,17 @@ async def setup_movie(
 async def book_tickets_page(request: Request, db: Session = Depends(get_db)):
     """Show ticket quantity input page"""
     movie = get_active_movie(db)
-    
+
     if not movie:
         return RedirectResponse(url="/", status_code=303)
-    
+
     available_seats = db.query(Seat).filter(
         Seat.movie_id == movie.id,
         Seat.is_booked == False
     ).count()
-    
+
     error = request.query_params.get('error')
-    
+
     return templates.TemplateResponse("book_step1.html", {
         "request": request,
         "movie": movie,
@@ -169,45 +169,45 @@ async def allocate_tickets(
 ):
     """Allocate seats and show seating map with default selection"""
     movie = get_active_movie(db)
-    
+
     if not movie:
         return RedirectResponse(url="/", status_code=303)
-    
+
     # Validate number of tickets
     if num_tickets < 1:
         return RedirectResponse(url="/book?error=invalid_count", status_code=303)
-    
+
     # Check available seats
     available_count = db.query(Seat).filter(
         Seat.movie_id == movie.id,
         Seat.is_booked == False
     ).count()
-    
+
     if num_tickets > available_count:
         return RedirectResponse(
-            url=f"/book?error=not_enough&requested={num_tickets}&available={available_count}", 
+            url=f"/book?error=not_enough&requested={num_tickets}&available={available_count}",
             status_code=303
         )
-    
+
     # Allocate seats using default algorithm
     result = allocate_seats(db, movie.id, num_tickets)
-    
+
     if not result['success']:
         return RedirectResponse(url=f"/book?error=allocation_failed", status_code=303)
-    
+
     # Get seat IDs for the selected seats
     selected_seat_ids = [s.id for s in result['seats']]
-    
+
     # Safeguard: ensure we actually got seats
     if not selected_seat_ids:
         return RedirectResponse(url=f"/book?error=no_seats_allocated", status_code=303)
-    
+
     # Get seating map
     seating_map = get_seating_map(db, movie.id, selected_seat_ids)
-    
+
     # Generate a temporary booking ID for display
     temp_booking_id = generate_booking_id(db)
-    
+
     return templates.TemplateResponse("book_step2.html", {
         "request": request,
         "movie": movie,
@@ -231,24 +231,24 @@ async def change_seat_position(
 ):
     """Change seat selection starting from specified position"""
     movie = get_active_movie(db)
-    
+
     if not movie:
         return RedirectResponse(url="/", status_code=303)
-    
+
     # Allocate seats from custom position
     result = allocate_seats(db, movie.id, num_tickets, start_position=start_position)
-    
+
     if not result['success']:
         # Re-allocate with default and show error
         default_result = allocate_seats(db, movie.id, num_tickets)
         selected_seat_ids = [s.id for s in default_result['seats']] if default_result['success'] else []
         seating_map = get_seating_map(db, movie.id, selected_seat_ids)
-        
+
         available_count = db.query(Seat).filter(
             Seat.movie_id == movie.id,
             Seat.is_booked == False
         ).count()
-        
+
         return templates.TemplateResponse("book_step2.html", {
             "request": request,
             "movie": movie,
@@ -261,15 +261,15 @@ async def change_seat_position(
             "available_count": available_count - num_tickets,
             "error": result['error']
         })
-    
+
     selected_seat_ids = [s.id for s in result['seats']]
     seating_map = get_seating_map(db, movie.id, selected_seat_ids)
-    
+
     available_count = db.query(Seat).filter(
         Seat.movie_id == movie.id,
         Seat.is_booked == False
     ).count()
-    
+
     return templates.TemplateResponse("book_step2.html", {
         "request": request,
         "movie": movie,
@@ -292,33 +292,33 @@ async def confirm_booking(
 ):
     """Confirm and finalize the booking"""
     movie = get_active_movie(db)
-    
+
     if not movie:
         return RedirectResponse(url="/", status_code=303)
-    
+
     # Handle empty or invalid seat_ids
     if not seat_ids or not seat_ids.strip():
         return RedirectResponse(url="/book?error=no_seats_selected", status_code=303)
-    
+
     # Parse seat IDs
     try:
         seat_id_list = [int(x) for x in seat_ids.split(',') if x.strip()]
     except ValueError:
         return RedirectResponse(url="/book?error=invalid_seats", status_code=303)
-    
+
     if not seat_id_list:
         return RedirectResponse(url="/book?error=no_seats", status_code=303)
-    
+
     # Verify all seats are still available
     seats = db.query(Seat).filter(
         Seat.id.in_(seat_id_list),
         Seat.movie_id == movie.id,
         Seat.is_booked == False
     ).all()
-    
+
     if len(seats) != len(seat_id_list):
         return RedirectResponse(url="/book?error=seats_taken", status_code=303)
-    
+
     # Create booking
     booking_id = generate_booking_id(db)
     booking = Booking(
@@ -328,7 +328,7 @@ async def confirm_booking(
     db.add(booking)
     db.commit()
     db.refresh(booking)
-    
+
     # Mark seats as booked and link to booking
     for seat in seats:
         seat.is_booked = True
@@ -337,9 +337,9 @@ async def confirm_booking(
             seat_id=seat.id
         )
         db.add(booking_seat)
-    
+
     db.commit()
-    
+
     return RedirectResponse(url=f"/booking/{booking_id}", status_code=303)
 
 
@@ -351,14 +351,14 @@ async def book_tickets(
 ):
     """Process ticket booking (legacy endpoint for compatibility)"""
     movie = get_active_movie(db)
-    
+
     if not movie:
         return RedirectResponse(url="/", status_code=303)
-    
+
     # Handle form data - seats might come as comma-separated string
     form_data = await request.form()
     seat_ids_raw = form_data.getlist("seat_ids")
-    
+
     # Flatten and convert to integers
     seat_ids = []
     for item in seat_ids_raw:
@@ -366,21 +366,21 @@ async def book_tickets(
             seat_ids.extend([int(x) for x in item.split(',') if x])
         elif item:
             seat_ids.append(int(item))
-    
+
     if not seat_ids:
         # No seats selected, redirect back
         return RedirectResponse(url="/book?error=no_seats", status_code=303)
-    
+
     # Verify seats are available
     seats = db.query(Seat).filter(
         Seat.id.in_(seat_ids),
         Seat.movie_id == movie.id,
         Seat.is_booked == False
     ).all()
-    
+
     if len(seats) != len(seat_ids):
         return RedirectResponse(url="/book?error=seats_taken", status_code=303)
-    
+
     # Create booking
     booking_id = generate_booking_id(db)
     booking = Booking(
@@ -390,7 +390,7 @@ async def book_tickets(
     db.add(booking)
     db.commit()
     db.refresh(booking)
-    
+
     # Mark seats as booked and link to booking
     for seat in seats:
         seat.is_booked = True
@@ -399,9 +399,9 @@ async def book_tickets(
             seat_id=seat.id
         )
         db.add(booking_seat)
-    
+
     db.commit()
-    
+
     return RedirectResponse(url=f"/booking/{booking_id}", status_code=303)
 
 
@@ -414,19 +414,19 @@ async def view_booking(
 ):
     """View a specific booking confirmation"""
     booking = db.query(Booking).filter(Booking.booking_id == booking_id).first()
-    
+
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
-    
+
     # Get booked seats for this booking
     seats = [bs.seat for bs in booking.booking_seats]
     seats_sorted = sorted(seats, key=lambda s: (s.row_letter, s.seat_number))
-    
+
     # If show_map is requested, generate seating map with markers
     seating_map = None
     if show_map:
         seating_map = get_booking_seating_map(db, booking)
-    
+
     return templates.TemplateResponse("booking_confirmation.html", {
         "request": request,
         "booking": booking,
@@ -440,7 +440,7 @@ async def view_booking(
 def get_booking_seating_map(db: Session, viewing_booking: Booking) -> dict:
     """
     Generate seating map for viewing a specific booking.
-    
+
     Returns dict with:
     - rows: list of row data with seats marked as:
       - 'o' for seats in the viewed booking
@@ -449,23 +449,23 @@ def get_booking_seating_map(db: Session, viewing_booking: Booking) -> dict:
     - movie: the movie info
     """
     movie = viewing_booking.movie
-    
+
     # Get all seats for the movie
     all_seats = db.query(Seat).filter(Seat.movie_id == movie.id).all()
-    
+
     # Get seat IDs for the viewed booking
     viewed_booking_seat_ids = {bs.seat_id for bs in viewing_booking.booking_seats}
-    
+
     # Get all booked seat IDs (from all bookings)
     all_booked_seats = db.query(BookingSeat).join(Seat).filter(
         Seat.movie_id == movie.id
     ).all()
     other_booked_seat_ids = {bs.seat_id for bs in all_booked_seats if bs.seat_id not in viewed_booking_seat_ids}
-    
+
     # Build the seating map
     row_letters = sorted(set(s.row_letter for s in all_seats), reverse=True)  # H to A (screen at top)
     seats_per_row = movie.seats_per_row
-    
+
     rows = []
     for row_letter in row_letters:
         row_seats = []
@@ -489,7 +489,7 @@ def get_booking_seating_map(db: Session, viewing_booking: Booking) -> dict:
             'letter': row_letter,
             'seats': row_seats
         })
-    
+
     return {
         'rows': rows,
         'seats_per_row': seats_per_row,
@@ -501,14 +501,14 @@ def get_booking_seating_map(db: Session, viewing_booking: Booking) -> dict:
 async def check_bookings(request: Request, db: Session = Depends(get_db)):
     """View all bookings"""
     movie = get_active_movie(db)
-    
+
     if not movie:
         return RedirectResponse(url="/", status_code=303)
-    
+
     bookings = db.query(Booking).filter(
         Booking.movie_id == movie.id
     ).order_by(Booking.created_at.desc()).all()
-    
+
     return templates.TemplateResponse("bookings.html", {
         "request": request,
         "movie": movie,
@@ -522,7 +522,7 @@ async def search_booking(booking_id: str = Form(""), db: Session = Depends(get_d
     if not booking_id.strip():
         # Blank input - go back to main menu
         return RedirectResponse(url="/", status_code=303)
-    
+
     # Redirect to booking view with show_map=true
     return RedirectResponse(url=f"/booking/{booking_id.strip()}?show_map=true", status_code=303)
 
@@ -533,7 +533,7 @@ async def reset_system(request: Request, db: Session = Depends(get_db)):
     # Deactivate all movies
     db.query(Movie).update({"is_active": False})
     db.commit()
-    
+
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -541,6 +541,50 @@ async def reset_system(request: Request, db: Session = Depends(get_db)):
 async def exit_system(request: Request):
     """Exit the system with a thank you message"""
     return templates.TemplateResponse("exit.html", {
+        "request": request
+    })
+
+
+# TDD Landing page route
+@app.get("/tdd_day_one", response_class=HTMLResponse, name="tdd_day_one")
+async def tdd_start_landing(request: Request):
+    """Main page with day 1 of TDD journey"""
+    return templates.TemplateResponse("tdd-portfolio.html", {
+        "request": request
+    })
+
+@app.get("/tdd_day_two", response_class=HTMLResponse, name="tdd_day_two")
+async def tdd_day_two_landing(request: Request):
+    """Main page with day 2 of TDD journey"""
+    return templates.TemplateResponse("tdd-refactoring-portfolio.html", {
+        "request": request
+    })
+
+@app.get("/tdd_day_three", response_class=HTMLResponse, name="tdd_day_three")
+async def tdd_day_three_landing(request: Request):
+    """Main page with day 3 of TDD journey"""
+    return templates.TemplateResponse("tdd-loyalty-portfolio.html", {
+        "request": request
+    })
+
+@app.get("/tdd_day_four", response_class=HTMLResponse, name="tdd_day_four")
+async def tdd_day_four_landing(request: Request):
+    """Main page with day 4 of TDD journey"""
+    return templates.TemplateResponse("tdd-solid-portfolio.html", {
+        "request": request
+    })
+
+@app.get("/tdd_day_five", response_class=HTMLResponse, name="tdd_day_five")
+async def tdd_day_five_landing(request: Request):
+    """Main page with day 5 of TDD journey"""
+    return templates.TemplateResponse("tdd-state-machine-portfolio.html", {
+        "request": request
+    })
+
+@app.get("/tdd_day_six", response_class=HTMLResponse, name="tdd_day_six")
+async def tdd_day_six_landing(request: Request):
+    """Main page with day 6 of TDD journey"""
+    return templates.TemplateResponse("tdd-solid-pricing-portfolio.html", {
         "request": request
     })
 

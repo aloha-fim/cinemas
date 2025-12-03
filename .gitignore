@@ -2,6 +2,7 @@
 
 # tests
 /tests
+/tdd
 
 # rust
 /target
