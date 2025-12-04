@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://username:password@localhost:5432/cinema_booking")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Handle SQLite specially (for testing)
 if DATABASE_URL.startswith("sqlite"):

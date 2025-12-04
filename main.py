@@ -22,6 +22,25 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
+# Mapping of TDD days to templates
+TDD_TEMPLATES = {
+    "one": "tdd-portfolio.html",
+    "two": "tdd-refactoring-portfolio.html",
+    "three": "tdd-loyalty-portfolio.html",
+    "four": "tdd-solid-portfolio.html",
+    "five": "tdd-state-machine-portfolio.html",
+    "six": "tdd-solid-pricing-portfolio.html",
+}
+
+@app.get("/tdd_day_{day}", response_class=HTMLResponse)
+async def tdd_landing(request: Request, day: str):
+    """Landing page for a specific day of TDD journey"""
+    template_name = TDD_TEMPLATES.get(day.lower())
+    if not template_name:
+        raise HTTPException(status_code=404, detail="Day not found")
+    return templates.TemplateResponse(template_name, {"request": request})
+
+
 @app.on_event("startup")
 def startup_event():
     """Create database tables on startup"""
@@ -541,50 +560,6 @@ async def reset_system(request: Request, db: Session = Depends(get_db)):
 async def exit_system(request: Request):
     """Exit the system with a thank you message"""
     return templates.TemplateResponse("exit.html", {
-        "request": request
-    })
-
-
-# TDD Landing page route
-@app.get("/tdd_day_one", response_class=HTMLResponse, name="tdd_day_one")
-async def tdd_start_landing(request: Request):
-    """Main page with day 1 of TDD journey"""
-    return templates.TemplateResponse("tdd-portfolio.html", {
-        "request": request
-    })
-
-@app.get("/tdd_day_two", response_class=HTMLResponse, name="tdd_day_two")
-async def tdd_day_two_landing(request: Request):
-    """Main page with day 2 of TDD journey"""
-    return templates.TemplateResponse("tdd-refactoring-portfolio.html", {
-        "request": request
-    })
-
-@app.get("/tdd_day_three", response_class=HTMLResponse, name="tdd_day_three")
-async def tdd_day_three_landing(request: Request):
-    """Main page with day 3 of TDD journey"""
-    return templates.TemplateResponse("tdd-loyalty-portfolio.html", {
-        "request": request
-    })
-
-@app.get("/tdd_day_four", response_class=HTMLResponse, name="tdd_day_four")
-async def tdd_day_four_landing(request: Request):
-    """Main page with day 4 of TDD journey"""
-    return templates.TemplateResponse("tdd-solid-portfolio.html", {
-        "request": request
-    })
-
-@app.get("/tdd_day_five", response_class=HTMLResponse, name="tdd_day_five")
-async def tdd_day_five_landing(request: Request):
-    """Main page with day 5 of TDD journey"""
-    return templates.TemplateResponse("tdd-state-machine-portfolio.html", {
-        "request": request
-    })
-
-@app.get("/tdd_day_six", response_class=HTMLResponse, name="tdd_day_six")
-async def tdd_day_six_landing(request: Request):
-    """Main page with day 6 of TDD journey"""
-    return templates.TemplateResponse("tdd-solid-pricing-portfolio.html", {
         "request": request
     })
 
