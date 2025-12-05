@@ -5,7 +5,13 @@ Validates promo codes and calculates discounts.
 """
 from typing import Dict, Any
 
-# Promo code configuration
+# Step 1: Define promo codes and their rules to test boundaries and edge cases
+# Step 2: Write validation test in red phase
+# Step 3: Implement validation logic in green phase
+# Step 4: Refactor code incrementally by repeat of Step 2 and Step 3
+
+
+# Promo code configuration-driven approach defined in a dictionary.
 # Format: code -> {discount_percent, min_tickets, requires_student_id}
 PROMO_CODES: Dict[str, Dict[str, Any]] = {
     "SAVE10": {"discount_percent": 10, "min_tickets": 1, "requires_student_id": False},
@@ -14,7 +20,7 @@ PROMO_CODES: Dict[str, Dict[str, Any]] = {
     "STUDENT": {"discount_percent": 15, "min_tickets": 1, "requires_student_id": True},
 }
 
-
+# Applied code.strip().upper() as refactor fix of invalid test cases to spaces in text from copy/paste or lowercase inputs.
 def validate_promo_code(code: str) -> Dict[str, Any]:
     """
     Validate if a promo code exists.
@@ -60,7 +66,7 @@ def calculate_discount(code: str, num_tickets: int, ticket_price: float) -> floa
 
     return discount
 
-
+# Expanded data structure and logic from boundary and conditional tests to handle student ID requirement and minimum tickets.
 def apply_promo_code(
     code: str,
     num_tickets: int,
