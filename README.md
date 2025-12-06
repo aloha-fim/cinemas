@@ -64,10 +64,11 @@ CREATE DATABASE cinema_booking;
 
 ### 3. Configure Environment
 
-Copy `.env.example` to `.env` and update with your database credentials:
+Create `.env` and update with your database credentials:
 
 ```bash
-cp .env.example .env
+echo. > .env (Windows)
+touch .env (Mac)
 ```
 
 Edit `.env`:
