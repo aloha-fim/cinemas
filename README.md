@@ -31,7 +31,6 @@ cinema_booking/
 ├── requirements.txt     # Python dependencies
 ├── pytest.ini           # Pytest configuration
 ├── .env                 # Environment variables
-├── .env.example         # Example environment file
 ├── templates/
 │   ├── base.html        # Base template
 │   ├── setup.html       # Movie setup page
@@ -45,6 +44,8 @@ cinema_booking/
 │       └── style.css    # Custom styles
 └── tests/
     ├── __init__.py
+    ├── test_tdd_promo_code_day_one.py  # TDD to promo codes
+    ├── test_tdd_ticket_pricing_day_six.py  # TDD w/SOLID
     ├── test_seat_allocation.py  # Seat algorithm tests
     └── test_api.py              # API route tests
 ```

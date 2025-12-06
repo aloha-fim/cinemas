@@ -106,6 +106,10 @@ async def home(request: Request, db: Session = Depends(get_db)):
             "error": None
         })
 
+@app.get("/setup", response_class=HTMLResponse)
+async def setup_form(request: Request):
+    return templates.TemplateResponse("setup.html", {"request": request})
+
 
 @app.post("/setup", response_class=HTMLResponse)
 async def setup_movie(
